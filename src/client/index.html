@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AeroLink</title>
+  <meta name="theme-color" content="#bfe6ff">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23eafaff'/%3E%3Cstop offset='.5' stop-color='%232f8fd9'/%3E%3Cstop offset='1' stop-color='%238fd0f7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='4' y='4' width='92' height='92' rx='24' fill='url(%23g)'/%3E%3Cpath d='M51 24c10 14 19 23 19 34a19 19 0 1 1-38 0c0-11 9-20 19-34z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/aero.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/views.css">
+</head>
+<body data-state="boot" data-role="phone-client">
+  <div class="sky" aria-hidden="true">
+    <div class="bubble b1"></div>
+    <div class="bubble b2"></div>
+    <div class="bubble b3"></div>
+    <div class="bubble b4"></div>
+  </div>
+
+  <div id="app">
+    <header class="topbar glass">
+      <button id="back-btn" class="aero-btn ghost" style="min-height:38px;padding:6px 16px">&#8249; Back</button>
+      <div class="brand"><span id="brand-icon"></span> AeroLink</div>
+      <div class="spacer"></div>
+      <span id="conn-pill" class="pill"><span class="dot"></span><span id="conn-label">Starting&hellip;</span></span>
+    </header>
+
+    <main>
+      <!-- phone: connecting splash -->
+      <section class="scene" id="scene-connecting">
+        <div class="stage glass">
+          <div class="pair-title">Connecting&hellip;</div>
+          <p class="pair-sub">Reaching your Mac over the air.</p>
+          <div class="pulse-ring"></div>
+        </div>
+      </section>
+
+      <!-- host: waiting / pairing scene -->
+      <section class="scene" id="scene-waiting">
+        <div class="stage glass">
+          <div class="pair-title">Link your Android device</div>
+          <p class="pair-sub">The moment it connects, this window blossoms into your AeroLink menu.</p>
+          <div class="pair-cols">
+            <div class="pair-card">
+              <h3>&#128246; Over Wi&#8209;Fi</h3>
+              <img id="qr-img" alt="QR code to pair your phone" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+              <div class="pair-url" id="pair-url">&hellip;</div>
+              <p class="pair-sub" style="margin-top:10px">Scan with your camera, or type the address in your phone&rsquo;s browser.</p>
+            </div>
+            <div class="pair-card">
+              <h3>&#128268; Over USB</h3>
+              <div class="usb-line" id="usb-line">Checking for a cable&hellip;</div>
+              <p class="pair-sub" style="text-align:left">Plug your phone in with USB debugging enabled and AeroLink opens itself on the phone.</p>
+            </div>
+          </div>
+          <div class="pulse-ring" title="Waiting for a device"></div>
+        </div>
+      </section>
+
+      <!-- the Frutiger Aero menu -->
+      <section class="scene" id="scene-menu">
+        <div class="stage glass">
+          <div class="menu-head">
+            <div class="menu-title" id="menu-title">Connected</div>
+            <div class="menu-sub" id="menu-sub">Pick a bubble to begin.</div>
+          </div>
+          <div class="menu-grid" id="menu-grid"></div>
+        </div>
+      </section>
+
+      <!-- feature views -->
+      <section class="scene" id="scene-view">
+        <div class="stage glass">
+          <div class="view" id="view-files">
+            <h2><span data-icon="files"></span> File sharing</h2>
+            <div class="drop-zone" id="drop-zone">
+              <strong id="drop-title">Drop files here or tap to choose</strong>
+              <span id="drop-sub">They appear on the other device instantly.</span>
+              <button class="aero-btn" id="pick-btn">Choose a file&hellip;</button>
+              <input type="file" id="file-input" multiple hidden>
+              <div class="progress-track" id="up-track"><div class="progress-fill" id="up-fill"></div></div>
+            </div>
+            <ul class="file-list" id="file-list"></ul>
+            <p class="empty-note" id="files-empty">No shared files yet.</p>
+          </div>
+
+          <div class="view" id="view-clipboard">
+            <h2><span data-icon="clipboard"></span> Clipboard sync</h2>
+            <textarea class="aero-textarea" id="clip-text" placeholder="Text to beam between devices&hellip;"></textarea>
+            <div class="clip-actions">
+              <button class="aero-btn" id="clip-send">Send to other device</button>
+              <button class="aero-btn green" id="clip-fetch">Fetch Mac clipboard</button>
+              <button class="aero-btn ghost" id="clip-copy">Copy here</button>
+            </div>
+            <p class="clip-note" id="clip-note"></p>
+          </div>
+
+          <div class="view" id="view-device">
+            <h2><span data-icon="device"></span> Device dashboard</h2>
+            <div class="card-grid" id="device-cards"></div>
+          </div>
+
+          <div class="view" id="view-remote">
+            <h2><span data-icon="remote"></span> Remote control</h2>
+            <div id="remote-phone-ui">
+              <div class="trackpad" id="trackpad">Glide a finger to move the Mac&rsquo;s pointer<br>&bull; tap to click &bull; two fingers to scroll</div>
+              <div class="send-text-row">
+                <input class="aero-input" id="remote-text" placeholder="Type on your Mac&hellip;">
+                <button class="aero-btn" id="remote-send-text">Send</button>
+              </div>
+              <div class="remote-rows">
+                <div class="remote-row">
+                  <button class="aero-btn ghost" data-key="escape">Esc</button>
+                  <button class="aero-btn ghost" data-key="tab">Tab</button>
+                  <button class="aero-btn ghost" data-key="backspace">&#9003;</button>
+                  <button class="aero-btn ghost" data-key="return">Return</button>
+                </div>
+                <div class="remote-row">
+                  <button class="aero-btn ghost" data-key="left">&#8592;</button>
+                  <button class="aero-btn ghost" data-key="up">&#8593;</button>
+                  <button class="aero-btn ghost" data-key="down">&#8595;</button>
+                  <button class="aero-btn ghost" data-key="right">&#8594;</button>
+                </div>
+                <div class="remote-row">
+                  <button class="aero-btn sun" data-media="prev">&#9198;</button>
+                  <button class="aero-btn sun" data-media="playpause">&#9199;</button>
+                  <button class="aero-btn sun" data-media="next">&#9197;</button>
+                </div>
+                <div class="remote-row">
+                  <button class="aero-btn green" data-volume="down">Vol &#8722;</button>
+                  <button class="aero-btn green" data-volume="mute">Mute</button>
+                  <button class="aero-btn green" data-volume="up">Vol +</button>
+                </div>
+              </div>
+              <div class="remote-note" id="remote-note"></div>
+            </div>
+            <p class="pair-sub" id="remote-host-hint" style="display:none">
+              Open this bubble on your phone to drive the Mac from there.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- bad/missing token -->
+      <section class="scene" id="scene-unauthorized">
+        <div class="stage glass">
+          <div class="pair-title">Not paired yet</div>
+          <p class="pair-sub" style="margin-top:12px">
+            Scan the QR code shown on your Mac&rsquo;s AeroLink window &mdash; it carries the pairing key this page needs.
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast-zone" aria-live="polite"></div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

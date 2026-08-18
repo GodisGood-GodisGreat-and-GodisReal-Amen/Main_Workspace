@@ -1,0 +1,43 @@
+/* AeroLink — Frutiger Aero design tokens */
+:root {
+  /* sky & nature */
+  --aero-sky-top: #bfe6ff;
+  --aero-sky-mid: #dff2ff;
+  --aero-sky-bottom: #f4fbff;
+  --aero-water: #2f8fd9;
+  --aero-water-deep: #1266a8;
+  --aero-grass: #7ec850;
+  --aero-grass-deep: #4d9a2e;
+  --aero-sun: #ffd76e;
+
+  /* surfaces & ink */
+  --aero-white: #ffffff;
+  --aero-white-glass: rgba(255, 255, 255, 0.58);
+  --aero-ink: #17364f;
+  --aero-ink-soft: #476982;
+  --aero-line: rgba(255, 255, 255, 0.75);
+
+  /* signature gel gradients */
+  --grad-aqua-btn: linear-gradient(180deg, #eafaff 0%, #b3e0ff 45%, #62b4ea 50%, #96d3f8 100%);
+  --grad-aqua-btn-hover: linear-gradient(180deg, #f2fcff 0%, #c3e8ff 45%, #74c0ef 50%, #a8dcfa 100%);
+  --grad-green-btn: linear-gradient(180deg, #f0ffdf 0%, #c0eb95 45%, #85cc58 50%, #abe07a 100%);
+  --grad-sun-btn: linear-gradient(180deg, #fff7e0 0%, #ffe6a1 45%, #f7c548 50%, #ffdc7e 100%);
+  --grad-panel: linear-gradient(165deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.42));
+  --grad-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.08) 58%, rgba(255, 255, 255, 0) 100%);
+
+  /* geometry */
+  --radius-bubble: 22px;
+  --radius-tile: 26px;
+  --radius-pill: 999px;
+
+  /* elevation */
+  --shadow-float: 0 12px 32px rgba(18, 102, 168, 0.22), 0 2px 6px rgba(18, 102, 168, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --shadow-tile: 0 10px 24px rgba(18, 102, 168, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  --shadow-press: 0 3px 10px rgba(18, 102, 168, 0.25), inset 0 2px 6px rgba(18, 102, 168, 0.25);
+
+  /* type */
+  --font-ui: "Lucida Grande", "Frutiger", "Segoe UI", "Trebuchet MS", "DejaVu Sans", system-ui, sans-serif;
+
+  --ease-gel: cubic-bezier(0.34, 1.56, 0.64, 1);
+}

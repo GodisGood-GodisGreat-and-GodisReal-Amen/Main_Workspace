@@ -1,0 +1,129 @@
+/* AeroLink — per-feature view styles */
+
+/* ------- files ------- */
+.drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 18px;
+  border: 2px dashed rgba(18, 102, 168, 0.35);
+  border-radius: var(--radius-tile);
+  background: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  color: var(--aero-ink-soft);
+  font: 400 14px/1.5 var(--font-ui);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.drop-zone.over { background: rgba(98, 180, 234, 0.18); border-color: var(--aero-water); }
+.progress-track {
+  width: 100%;
+  height: 18px;
+  margin-top: 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(18, 102, 168, 0.25);
+  box-shadow: inset 0 2px 5px rgba(18, 102, 168, 0.15);
+  overflow: hidden;
+  display: none;
+}
+.progress-track.busy { display: block; }
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: var(--radius-pill);
+  background: var(--grad-aqua-btn);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: width 0.2s ease;
+}
+.file-list { list-style: none; margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid var(--aero-line);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 #fff, 0 4px 12px rgba(18, 102, 168, 0.1);
+}
+.file-row .fname { font: 600 14.5px/1.3 var(--font-ui); color: var(--aero-ink); word-break: break-all; }
+.file-row .fmeta { font: 400 12px/1.3 var(--font-ui); color: var(--aero-ink-soft); }
+.file-row .grow { flex: 1; min-width: 0; }
+.file-row .mini {
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 13px;
+  text-decoration: none;
+}
+.empty-note { margin-top: 18px; text-align: center; font: 400 14px/1.5 var(--font-ui); color: var(--aero-ink-soft); }
+
+/* ------- clipboard ------- */
+.clip-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.clip-note { margin-top: 12px; font: 400 13px/1.5 var(--font-ui); color: var(--aero-ink-soft); }
+
+/* ------- device dashboard ------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.info-card {
+  padding: 18px;
+  border-radius: var(--radius-tile);
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid var(--aero-line);
+  box-shadow: inset 0 1px 0 #fff, 0 6px 16px rgba(18, 102, 168, 0.13);
+}
+.info-card .k { font: 600 12px/1.3 var(--font-ui); color: var(--aero-ink-soft); text-transform: uppercase; letter-spacing: 0.7px; }
+.info-card .v { margin-top: 6px; font: 700 20px/1.25 var(--font-ui); color: var(--aero-water-deep); word-break: break-word; }
+.info-card .s { margin-top: 4px; font: 400 12.5px/1.4 var(--font-ui); color: var(--aero-ink-soft); }
+.battery-shell {
+  margin-top: 10px;
+  height: 22px;
+  border-radius: 8px;
+  border: 2px solid rgba(18, 102, 168, 0.45);
+  background: rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+}
+.battery-fill {
+  height: 100%;
+  background: var(--grad-green-btn);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: width 0.4s ease;
+}
+
+/* ------- remote control ------- */
+.trackpad {
+  height: 250px;
+  border-radius: var(--radius-tile);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.35) 60%),
+    rgba(190, 225, 250, 0.4);
+  border: 1px solid var(--aero-line);
+  box-shadow: inset 0 2px 10px rgba(18, 102, 168, 0.18), 0 6px 16px rgba(18, 102, 168, 0.12);
+  display: grid;
+  place-items: center;
+  color: var(--aero-ink-soft);
+  font: 600 13.5px/1.5 var(--font-ui);
+  text-align: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.remote-rows { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.remote-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.remote-row .aero-btn { min-width: 64px; }
+.remote-note {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 246, 214, 0.8);
+  border: 1px solid rgba(196, 148, 20, 0.35);
+  font: 400 13px/1.5 var(--font-ui);
+  color: #6e4e05;
+  display: none;
+}
+.remote-note.show { display: block; }
+.send-text-row { display: flex; gap: 10px; margin-top: 16px; }
+.send-text-row .aero-input { flex: 1; }
