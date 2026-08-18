@@ -24,7 +24,10 @@ const MSG = {
   FILE_REMOVED: 'file-removed',
   // USB pairing status (host only)
   USB_STATUS: 'usb-status',
-  // reserved for v2 screen preview
+  // app launcher — Frutiger Aero icon grid on the phone
+  APPS_GET: 'apps-get',
+  APPS_LIST: 'apps-list',
+  // live screen preview (full-screen remote mode)
   SCREEN_START: 'screen-start',
   SCREEN_STOP: 'screen-stop',
   SCREEN_FRAME: 'screen-frame',
@@ -32,7 +35,9 @@ const MSG = {
 
 const ROLES = { HOST: 'mac-host', PHONE: 'phone-client' };
 
-const INPUT_KINDS = ['move', 'click', 'scroll', 'text', 'key', 'media', 'volume'];
+// 'launch' opens an app by name; 'click-at' clicks at normalized (0..1)
+// screen coordinates — the full-screen mode's tap-to-click.
+const INPUT_KINDS = ['move', 'click', 'click-at', 'scroll', 'text', 'key', 'media', 'volume', 'launch'];
 
 const CLOSE_BAD_TOKEN = 4001;
 

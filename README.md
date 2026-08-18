@@ -15,10 +15,10 @@ One codebase, two faces:
 | Bubble | Feature |
 |---|---|
 | **Files** | Beam files both ways — drag & drop on the Mac, tap to pick on the phone, live progress bar. Files land in `~/Downloads/AeroLink/` on the Mac. |
-| **Clipboard** | Push text into the Mac clipboard from the phone, or fetch the Mac clipboard onto the phone. |
+| **Clipboard** | Truly bidirectional: copy on the Mac and it appears on the phone *by itself* (the server watches the Mac clipboard), push text the other way with Send or one-tap **Paste & send**. |
 | **Devices** | Glossy dashboard cards: phone name, battery, network, screen, and whether it's linked over Wi-Fi or USB. |
-| **Remote** | Drive the Mac from the phone: trackpad surface, typing, arrow/return/esc keys, media play/pause & skip, volume. |
-| **Screen** | Coming soon (protocol & adapter seam already reserved). |
+| **Launcher** | Remote-control mode 1 — the Mac's installed apps as gel icons on a white Frutiger Aero sheet. Tap one, it opens on the Mac (`open -a`). Searchable. |
+| **Full screen** | Remote-control mode 2 — the *whole* Mac display streamed live to the phone. Tap the picture to click exactly there, hold for a right-click; trackpad, typing, arrow/return/esc keys, media play/pause & skip, and volume sit underneath. |
 
 ## Pairing — two ways
 
@@ -55,17 +55,25 @@ npm run dev:server
 
 - **Accessibility** (System Settings → Privacy & Security → Accessibility):
   needed the first time you use remote typing/keys.
-- **Pointer control** needs [cliclick](https://github.com/BlueM/cliclick):
-  `brew install cliclick`. Keyboard, media, and volume work without it.
+- **Screen Recording** (System Settings → Privacy & Security → Screen Recording):
+  needed for the Full screen mode's live view — macOS prompts on first use.
+- **Pointer control** (trackpad + tap-to-click) needs
+  [cliclick](https://github.com/BlueM/cliclick): `brew install cliclick`.
+  Keyboard, media, volume, and the Launcher work without it.
 - **Media keys** control Spotify or Apple Music (whichever is running).
 
 ## Tests
 
 ```bash
 npm test           # protocol + HTTP + file-store unit/integration tests (node:test)
-npm run test:e2e   # Playwright: transformation, responsive layouts, clipboard round-trip
+npm run test:e2e   # Playwright: transformation, responsive layouts, clipboard
+                   # auto-sync, launcher grid, live screen frames
                    # (set CHROMIUM_PATH if Chromium isn't at /opt/pw-browsers/chromium)
 ```
+
+The stub adapter (used by `npm run dev:server` and the tests) fakes the
+macOS-only seams so everything is demoable anywhere: a twelve-app launcher
+list and an animated SVG "screen" stream.
 
 ## How it's put together
 
@@ -95,6 +103,10 @@ period absorbing phone reconnects).
 
 - Android Chrome blocks `navigator.clipboard` on plain-HTTP LAN pages — the
   clipboard view's textarea + long-press is the fallback (USB pairing uses
-  `localhost`, which gets the full clipboard API).
+  `localhost`, which gets the full clipboard API). Mac → phone auto-sync
+  fills the textarea regardless.
+- The live screen streams JPEG snapshots (~1.5 fps) — built for glanceable
+  control, not video playback.
 - Battery/network cards show “—” on browsers without those APIs.
-- macOS-specific behavior (osascript, adb, the .dmg build) needs a real Mac.
+- macOS-specific behavior (osascript, adb, desktopCapturer, the .dmg build)
+  needs a real Mac.

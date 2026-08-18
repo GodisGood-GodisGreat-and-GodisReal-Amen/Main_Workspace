@@ -1,5 +1,8 @@
-// Clipboard sync. navigator.clipboard needs a secure context (or localhost —
-// which USB pairing gives us); the textarea is the universal fallback.
+// Clipboard sync — bidirectional. Phone -> Mac is a send (or "Paste & send");
+// Mac -> phone happens by itself: the server watches the Mac clipboard and
+// pushes every change here as a clipboard-update. navigator.clipboard needs a
+// secure context (or localhost — which USB pairing gives us); the textarea is
+// the universal fallback.
 import { $, toast, fmtTime } from '../util.js';
 
 export function initClipboard({ store, send, isHost }) {
@@ -13,6 +16,19 @@ export function initClipboard({ store, send, isHost }) {
 
   $('#clip-fetch').addEventListener('click', () => {
     send({ type: 'clipboard-get' });
+  });
+
+  // one tap: read this device's clipboard and beam it to the other side
+  $('#clip-paste').addEventListener('click', async () => {
+    try {
+      const value = await navigator.clipboard.readText();
+      text.value = value;
+      send({ type: 'clipboard-set', text: value });
+      toast(isHost ? 'Mac clipboard sent to the phone' : 'Phone clipboard sent to the Mac');
+    } catch {
+      text.focus();
+      toast('This browser blocks clipboard read on LAN pages — long-press the box, paste, then Send', true);
+    }
   });
 
   $('#clip-copy').addEventListener('click', async () => {
@@ -29,7 +45,10 @@ export function initClipboard({ store, send, isHost }) {
 
   function onUpdate(msg) {
     text.value = msg.text || '';
-    note.textContent = `Updated from ${msg.from === 'mac' ? 'the Mac' : 'the phone'} at ${fmtTime(msg.ts)}.`;
+    text.classList.remove('clip-flash');
+    void text.offsetWidth; // restart the glow animation
+    text.classList.add('clip-flash');
+    note.textContent = `Updated from ${msg.from === 'mac' ? 'the Mac' : 'the phone'} at ${fmtTime(msg.ts)} — live sync is on.`;
   }
 
   return { onUpdate };

@@ -33,7 +33,15 @@ function escapeAsText(text) {
   return text.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-function createMacInput() {
+// App names come from our own /Applications scan, but a client could send
+// anything — allow only name-like strings (no paths, no option-like prefixes).
+function safeAppName(name) {
+  const n = String(name || '').trim();
+  if (!n || n.length > 80 || n.startsWith('-') || /[/\\:\0]/.test(n)) return null;
+  return n;
+}
+
+function createMacInput({ getScreenSize } = {}) {
   let cliclick = null;
   for (const p of CLICLICK_PATHS) {
     if (fs.existsSync(p)) { cliclick = p; break; }
@@ -127,6 +135,27 @@ function createMacInput() {
     async click(msg) {
       if (!cliclick) return needCliclick();
       return run(cliclick, [msg.button === 'right' ? 'rc:.' : 'c:.']);
+    },
+
+    // Full-screen mode: tap on the live preview -> click at that exact point.
+    // nx/ny are normalized 0..1 so the phone never needs the Mac's resolution.
+    async 'click-at'(msg) {
+      if (!cliclick) return needCliclick();
+      const size = (getScreenSize && getScreenSize()) || { width: 1440, height: 900 };
+      const nx = Math.min(1, Math.max(0, Number(msg.nx) || 0));
+      const ny = Math.min(1, Math.max(0, Number(msg.ny) || 0));
+      const x = Math.round(nx * (size.width - 1));
+      const y = Math.round(ny * (size.height - 1));
+      const cmd = msg.button === 'right' ? 'rc' : msg.double ? 'dc' : 'c';
+      return run(cliclick, [`${cmd}:${x},${y}`]);
+    },
+
+    async launch(msg) {
+      const name = safeAppName(msg.app);
+      if (!name) return { ok: false, message: 'unknown app' };
+      const res = await run('open', ['-a', name]);
+      if (!res.ok) return { ok: false, message: `Could not open “${name}”` };
+      return { ok: true };
     },
 
     async scroll(msg) {

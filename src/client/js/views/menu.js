@@ -3,11 +3,11 @@ import { $, el, escapeHtml } from '../util.js';
 import { icon } from '../icons.js';
 
 const TILES = [
-  { id: 'files', label: 'Files', hint: 'Beam files across', variant: 'aqua' },
-  { id: 'clipboard', label: 'Clipboard', hint: 'Copy here, paste there', variant: 'green' },
-  { id: 'device', label: 'Devices', hint: 'Battery & connection', variant: 'sun' },
-  { id: 'remote', label: 'Remote', hint: 'Drive the Mac by phone', variant: 'deep' },
-  { id: 'screen', label: 'Screen', hint: 'Coming soon', variant: 'aqua', soon: true },
+  { id: 'files', icon: 'files', label: 'Files', hint: 'Beam files across', variant: 'aqua' },
+  { id: 'clipboard', icon: 'clipboard', label: 'Clipboard', hint: 'Synced both ways, live', variant: 'green' },
+  { id: 'device', icon: 'device', label: 'Devices', hint: 'Battery & connection', variant: 'sun' },
+  { id: 'apps', icon: 'apps', label: 'Launcher', hint: 'Open Mac apps by icon', variant: 'aqua' },
+  { id: 'remote', icon: 'screen', label: 'Full screen', hint: 'See & drive the whole Mac', variant: 'deep' },
 ];
 
 export function initMenu({ store, isHost, openView }) {
@@ -15,20 +15,19 @@ export function initMenu({ store, isHost, openView }) {
   grid.innerHTML = '';
   TILES.forEach((t, i) => {
     const tile = el('button', {
-      class: `tile${t.soon ? ' soon' : ''}`,
+      class: 'tile',
       style: `--i:${i}`,
       type: 'button',
       'data-tile': t.id,
     });
     tile.innerHTML = `
-      ${icon(t.id === 'screen' ? 'screen' : t.id, t.variant)}
+      ${icon(t.icon, t.variant)}
       <span class="text">
         <span class="label">${escapeHtml(t.label)}</span>
         <span class="hint">${escapeHtml(t.hint)}</span>
       </span>
       <span class="chev">&#8250;</span>`;
-    if (!t.soon) tile.addEventListener('click', () => openView(t.id));
-    else tile.addEventListener('click', () => {});
+    tile.addEventListener('click', () => openView(t.id));
     grid.appendChild(tile);
   });
 

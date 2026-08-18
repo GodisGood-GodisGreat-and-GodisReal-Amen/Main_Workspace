@@ -93,9 +93,10 @@
             <div class="clip-actions">
               <button class="aero-btn" id="clip-send">Send to other device</button>
               <button class="aero-btn green" id="clip-fetch">Fetch Mac clipboard</button>
+              <button class="aero-btn sun" id="clip-paste">Paste &amp; send</button>
               <button class="aero-btn ghost" id="clip-copy">Copy here</button>
             </div>
-            <p class="clip-note" id="clip-note"></p>
+            <p class="clip-note" id="clip-note">Live sync is on &mdash; copy something on the Mac and it appears here by itself.</p>
           </div>
 
           <div class="view" id="view-device">
@@ -106,6 +107,30 @@
           <div class="view" id="view-remote">
             <h2><span data-icon="remote"></span> Remote control</h2>
             <div id="remote-phone-ui">
+              <div class="seg" id="remote-seg" role="tablist" aria-label="Remote control mode">
+                <button class="seg-btn" type="button" role="tab" data-mode="apps" aria-selected="false">&#10022; Launcher</button>
+                <button class="seg-btn" type="button" role="tab" data-mode="screen" aria-selected="false">&#128421; Full screen</button>
+              </div>
+
+              <!-- mode 1: Frutiger Aero launcher — gel app icons on white -->
+              <div class="remote-mode" id="remote-mode-apps">
+                <div class="launcher">
+                  <div class="launcher-bar">
+                    <input class="aero-input" id="launcher-search" type="search" placeholder="Search Mac apps&hellip;" aria-label="Search Mac apps">
+                    <button class="aero-btn ghost" id="launcher-refresh" title="Reload the app list">&#8635;</button>
+                  </div>
+                  <p class="launcher-empty" id="launcher-empty">Loading the Mac&rsquo;s apps&hellip;</p>
+                  <div class="launcher-grid" id="launcher-grid" role="list"></div>
+                </div>
+              </div>
+
+              <!-- mode 2: the whole screen, live, tap to click -->
+              <div class="remote-mode" id="remote-mode-screen">
+              <div class="screen-stage" id="screen-stage">
+                <img id="screen-img" alt="Live view of the Mac screen" draggable="false">
+                <div class="screen-hint" id="screen-hint">Connecting to the Mac&rsquo;s screen&hellip;</div>
+              </div>
+              <p class="screen-tip">Tap the picture to click there &bull; hold for a right-click</p>
               <div class="trackpad" id="trackpad">Glide a finger to move the Mac&rsquo;s pointer<br>&bull; tap to click &bull; two fingers to scroll</div>
               <div class="send-text-row">
                 <input class="aero-input" id="remote-text" placeholder="Type on your Mac&hellip;">
@@ -135,10 +160,12 @@
                   <button class="aero-btn green" data-volume="up">Vol +</button>
                 </div>
               </div>
+              </div><!-- /remote-mode-screen -->
               <div class="remote-note" id="remote-note"></div>
             </div>
             <p class="pair-sub" id="remote-host-hint" style="display:none">
-              Open this bubble on your phone to drive the Mac from there.
+              Open this bubble on your phone: the Launcher opens Mac apps by icon,
+              and Full screen shows this whole display live &mdash; tap it to click.
             </p>
           </div>
         </div>

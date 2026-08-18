@@ -7,13 +7,14 @@ const { tokensEqual } = require('./token');
 
 const HELLO_TIMEOUT_MS = 5000;
 const PING_INTERVAL_MS = 25000;
+const CLIPBOARD_POLL_MS = 1000;
 
 // WebSocket hub: authenticates clients, tracks presence (which drives the
 // host-side UI transformation), and routes clipboard / input / device-info
 // messages through the host adapter.
 function createHub({ httpServer, adapter, pairingToken, hostToken, log = () => {} }) {
   const wss = new WebSocketServer({ server: httpServer });
-  const clients = new Map(); // ws -> { id, role, device, transport, info }
+  const clients = new Map(); // ws -> { id, role, device, transport, info, wantsScreen }
 
   function send(ws, msg) {
     if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));
@@ -53,12 +54,72 @@ function createHub({ httpServer, adapter, pairingToken, hostToken, log = () => {
     return isLoopback ? 'usb' : 'wifi';
   }
 
+  // ---- clipboard watcher: makes Mac -> phone sync automatic ----
+  // Polls the host clipboard while at least one phone is linked and fans any
+  // change out to everyone. `lastClip` is also updated on CLIPBOARD_SET so a
+  // value a client just pushed is not echoed back as a "Mac change".
+  let lastClip = null;
+  const clipboardTimer = setInterval(() => {
+    if (![...clients.values()].some((m) => m.role === ROLES.PHONE)) {
+      lastClip = null; // re-baseline on the next link so old text isn't replayed
+      return;
+    }
+    let text;
+    try {
+      text = String(adapter.getClipboard() ?? '');
+    } catch {
+      return;
+    }
+    if (lastClip === null) {
+      lastClip = text; // first poll after a phone links: baseline, don't blast history
+      return;
+    }
+    if (text !== lastClip) {
+      lastClip = text;
+      broadcast({ type: MSG.CLIPBOARD_UPDATE, text, from: 'mac', ts: Date.now() });
+    }
+  }, CLIPBOARD_POLL_MS);
+
+  // ---- screen streaming: start the adapter capture while anyone watches ----
+  let screenRunning = false;
+
+  function screenWatchers() {
+    return [...clients.values()].filter((m) => m.wantsScreen).length;
+  }
+
+  function syncScreenCapture() {
+    const wanted = screenWatchers() > 0;
+    if (wanted && !screenRunning) {
+      screenRunning = true;
+      Promise.resolve(
+        adapter.startScreen((frame) =>
+          broadcast({ type: MSG.SCREEN_FRAME, ...frame }, (m) => m.wantsScreen)
+        )
+      ).catch((err) => {
+        screenRunning = false;
+        log('screen capture failed:', err.message);
+        broadcast(
+          { type: MSG.ERROR, code: 'screen-failed', message: err.message },
+          (m) => m.wantsScreen
+        );
+      });
+    } else if (!wanted && screenRunning) {
+      screenRunning = false;
+      try {
+        adapter.stopScreen();
+      } catch (err) {
+        log('screen stop failed:', err.message);
+      }
+    }
+  }
+
   async function handleMessage(ws, meta, msg) {
     switch (msg.type) {
       case MSG.CLIPBOARD_SET: {
         const text = String(msg.text ?? '');
         try {
           adapter.setClipboard(text);
+          lastClip = text; // the watcher shouldn't echo this back as a Mac change
         } catch (err) {
           log('clipboard write failed:', err.message);
         }
@@ -101,9 +162,27 @@ function createHub({ httpServer, adapter, pairingToken, hostToken, log = () => {
         send(ws, { type: MSG.INPUT_RESULT, kind: msg.kind, ...result });
         break;
       }
+      case MSG.APPS_GET: {
+        let apps = [];
+        try {
+          apps = adapter.listApps ? await adapter.listApps() : [];
+        } catch (err) {
+          log('app list failed:', err.message);
+        }
+        send(ws, { type: MSG.APPS_LIST, apps });
+        break;
+      }
       case MSG.SCREEN_START:
+        if (!adapter.startScreen) {
+          send(ws, { type: MSG.ERROR, code: 'not-supported', message: 'Screen preview needs the macOS host app' });
+          return;
+        }
+        meta.wantsScreen = true;
+        syncScreenCapture();
+        break;
       case MSG.SCREEN_STOP:
-        send(ws, { type: MSG.ERROR, code: 'not-supported', message: 'Screen preview is coming in a future version' });
+        meta.wantsScreen = false;
+        syncScreenCapture();
         break;
       default:
         send(ws, { type: MSG.ERROR, code: 'bad-message', message: `unknown message type: ${msg.type}` });
@@ -151,8 +230,14 @@ function createHub({ httpServer, adapter, pairingToken, hostToken, log = () => {
           transport: detectTransport(ws, req, role),
           connectedAt: Date.now(),
           info: null,
+          wantsScreen: false,
         };
         clients.set(ws, newMeta);
+        if (role === ROLES.PHONE && lastClip === null) {
+          // baseline the clipboard watcher now so anything copied from here on
+          // is a change worth broadcasting — but pre-link history is not
+          try { lastClip = String(adapter.getClipboard() ?? ''); } catch { lastClip = ''; }
+        }
         send(ws, {
           type: MSG.HELLO_ACK,
           clientId: newMeta.id,
@@ -169,7 +254,10 @@ function createHub({ httpServer, adapter, pairingToken, hostToken, log = () => {
 
     ws.on('close', () => {
       clearTimeout(helloTimer);
-      if (clients.delete(ws)) broadcastPresence();
+      if (clients.delete(ws)) {
+        broadcastPresence();
+        syncScreenCapture(); // a watcher may have vanished without screen-stop
+      }
     });
     ws.on('error', () => {});
   });
@@ -193,6 +281,11 @@ function createHub({ httpServer, adapter, pairingToken, hostToken, log = () => {
 
   function stop() {
     clearInterval(pingTimer);
+    clearInterval(clipboardTimer);
+    if (screenRunning) {
+      screenRunning = false;
+      try { adapter.stopScreen(); } catch {}
+    }
     for (const ws of wss.clients) ws.terminate();
     wss.close();
   }

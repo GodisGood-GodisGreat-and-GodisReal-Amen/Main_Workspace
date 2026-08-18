@@ -13,13 +13,11 @@ function tmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'aerolink-ws-'));
 }
 
-async function startServer() {
-  const server = createAeroServer({
-    port: 0,
-    adapter: createStubAdapter({ storageDir: tmpDir() }),
-  });
+async function startServer(adapterOptions = {}) {
+  const adapter = createStubAdapter({ storageDir: tmpDir(), ...adapterOptions });
+  const server = createAeroServer({ port: 0, adapter });
   const { port } = await server.listen();
-  return { server, wsUrl: `ws://127.0.0.1:${port}` };
+  return { server, adapter, wsUrl: `ws://127.0.0.1:${port}` };
 }
 
 function connect(wsUrl, hello) {
@@ -141,6 +139,60 @@ test('unknown input kinds are rejected as bad-message', async () => {
   phone.send({ type: 'input', kind: 'explode' });
   const err = await phone.next((m) => m.type === 'error');
   assert.equal(err.code, 'bad-message');
+  phone.close();
+  await server.stop();
+});
+
+test('launch and click-at are valid input kinds (stub reports macOS-only)', async () => {
+  const { server, wsUrl } = await startServer();
+  const phone = await connect(wsUrl, { role: 'phone-client', token: server.pairingToken });
+  phone.send({ type: 'input', kind: 'launch', app: 'Safari' });
+  const launched = await phone.next((m) => m.type === 'input-result');
+  assert.equal(launched.ok, false);
+  assert.match(launched.message, /macOS/);
+  phone.send({ type: 'input', kind: 'click-at', nx: 0.5, ny: 0.5 });
+  const clicked = await phone.next((m) => m.type === 'input-result');
+  assert.equal(clicked.ok, false); // routed to the adapter, not rejected as bad-message
+  phone.close();
+  await server.stop();
+});
+
+test('apps-get returns the adapter app list', async () => {
+  const { server, wsUrl } = await startServer();
+  const phone = await connect(wsUrl, { role: 'phone-client', token: server.pairingToken });
+  phone.send({ type: 'apps-get' });
+  const list = await phone.next((m) => m.type === 'apps-list');
+  assert.ok(Array.isArray(list.apps) && list.apps.length > 0);
+  assert.ok(list.apps.every((a) => a.id && a.name));
+  phone.close();
+  await server.stop();
+});
+
+test('screen-start streams frames and screen-stop ends the stream', async () => {
+  const { server, wsUrl } = await startServer({ frameIntervalMs: 60 });
+  const phone = await connect(wsUrl, { role: 'phone-client', token: server.pairingToken });
+
+  phone.send({ type: 'screen-start' });
+  const frame = await phone.next((m) => m.type === 'screen-frame');
+  assert.match(frame.dataUrl, /^data:image\//);
+  assert.ok(frame.w > 0 && frame.h > 0);
+
+  phone.send({ type: 'screen-stop' });
+  await new Promise((r) => setTimeout(r, 150)); // let in-flight frames drain
+  phone.messages.length = 0;
+  await new Promise((r) => setTimeout(r, 200));
+  assert.equal(phone.messages.filter((m) => m.type === 'screen-frame').length, 0);
+  phone.close();
+  await server.stop();
+});
+
+test('a Mac clipboard change is pushed to the phone automatically', async () => {
+  const { server, adapter, wsUrl } = await startServer();
+  const phone = await connect(wsUrl, { role: 'phone-client', token: server.pairingToken });
+  adapter.setClipboard('copied on the mac'); // as if the user pressed cmd-C
+  const update = await phone.next((m) => m.type === 'clipboard-update', 4000);
+  assert.equal(update.text, 'copied on the mac');
+  assert.equal(update.from, 'mac');
   phone.close();
   await server.stop();
 });

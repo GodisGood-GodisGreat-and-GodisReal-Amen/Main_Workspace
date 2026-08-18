@@ -30,11 +30,18 @@ const GLYPHS = {
     <path d="M52 52l14 14" style="stroke:#fff;stroke-width:7;stroke-linecap:round;fill:none"/>
     <circle class="cut" cx="70" cy="34" r="3.4"/>
     <circle class="cut" cx="30" cy="66" r="3"/>`,
-  // monitor: screen (coming soon)
+  // monitor with pointer: full-screen remote
   screen: `
     <rect x="26" y="30" width="50" height="34" rx="5"/>
     <path class="cut" d="M44 72h14M51 64v8"/>
-    <path d="M40 70h22v6H40z"/>`,
+    <path d="M40 70h22v6H40z"/>
+    <path class="cut" d="M46 40l14 6-6.4 2.2L51 55 46 40z"/>`,
+  // grid of gel squares: the app launcher
+  apps: `
+    <rect x="27" y="27" width="20" height="20" rx="6"/>
+    <rect x="53" y="27" width="20" height="20" rx="6" style="opacity:.92"/>
+    <rect x="27" y="53" width="20" height="20" rx="6" style="opacity:.92"/>
+    <rect class="cut" x="53" y="53" width="20" height="20" rx="6"/>`,
   // droplet logo
   drop: `
     <path d="M51 24c10 14 19 23 19 34a19 19 0 1 1-38 0c0-11 9-20 19-34z"/>
@@ -44,8 +51,28 @@ const GLYPHS = {
 let uid = 0;
 
 export function icon(name, variant = 'aqua', size = 96) {
+  return chassis(GLYPHS[name] || GLYPHS.drop, variant, size);
+}
+
+// Launcher icons: same gel chassis, the app's initials as the glyph. The
+// variant is picked from the name so each app keeps a stable color.
+export function appIcon(name, size = 56) {
+  const clean = String(name || '?').trim();
+  const words = clean.split(/[\s-]+/).filter(Boolean);
+  const initials = (words.length > 1
+    ? words[0][0] + words[1][0]
+    : clean.slice(0, 2)
+  ).toUpperCase().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const keys = Object.keys(VARIANTS);
+  let hash = 0;
+  for (const ch of clean) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  const variant = keys[hash % keys.length];
+  const glyph = `<text x="50" y="65" text-anchor="middle" font-family="'Lucida Grande','Segoe UI','Trebuchet MS',sans-serif" font-size="42" font-weight="700">${initials}</text>`;
+  return chassis(glyph, variant, size);
+}
+
+function chassis(g, variant, size) {
   const [hi, lite, base, deep] = VARIANTS[variant] || VARIANTS.aqua;
-  const g = GLYPHS[name] || GLYPHS.drop;
   const id = `g${++uid}`;
   return `
 <svg class="badge" viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true">

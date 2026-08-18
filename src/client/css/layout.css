@@ -253,5 +253,14 @@ body.narrow main { padding: 14px 10px 30px; align-items: start; }
     animation: none;
     opacity: 1;
   }
-  .tile, .aero-btn { transition: none; }
+  .app-chip, .remote-mode.active, .aero-textarea.clip-flash { animation: none; }
+  .tile, .aero-btn, .seg-btn, .app-chip { transition: none; }
 }
+
+/* notched phones: keep the chrome out of the display cutouts */
+#app {
+  padding-top: env(safe-area-inset-top, 0);
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
+}
+main { padding-bottom: calc(40px + env(safe-area-inset-bottom, 0)); }

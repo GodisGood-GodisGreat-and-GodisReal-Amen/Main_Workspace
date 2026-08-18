@@ -78,15 +78,22 @@ function setConnPill(online, label) {
 }
 
 // ---- hash routing (menu <-> feature views) ----
-const VIEWS = ['files', 'clipboard', 'device', 'remote'];
+// '#apps' and '#remote' are two modes of the same remote-control view:
+// the launcher (gel app icons) and the full-screen live view.
+const VIEWS = ['files', 'clipboard', 'device', 'remote', 'apps'];
+const VIEW_ELEMENTS = ['files', 'clipboard', 'device', 'remote'];
+let onViewRouted = null; // set in boot(): (viewName|null, rawHash) => {}
 
 function applyHash() {
-  const name = location.hash.replace('#', '');
-  if (VIEWS.includes(name) && (store.state === 'menu' || store.state === 'view')) {
-    for (const v of VIEWS) $(`#view-${v}`).classList.toggle('active', v === name);
+  const raw = location.hash.replace('#', '');
+  const target = raw === 'apps' ? 'remote' : raw;
+  if (VIEWS.includes(raw) && (store.state === 'menu' || store.state === 'view')) {
+    for (const v of VIEW_ELEMENTS) $(`#view-${v}`).classList.toggle('active', v === target);
     setState('view');
-  } else if (store.state === 'view') {
-    setState('menu');
+    if (onViewRouted) onViewRouted(target, raw);
+  } else {
+    if (store.state === 'view') setState('menu');
+    if (onViewRouted) onViewRouted(null, raw);
   }
 }
 window.addEventListener('hashchange', applyHash);
@@ -115,6 +122,13 @@ function boot() {
     remote: initRemote({ store, send: (m) => ws.send(m), isHost }),
   };
 
+  // the remote view manages a live screen stream — tell it when it is routed
+  // to (and in which mode) or away, so frames only flow while it's on screen
+  onViewRouted = (view, raw) => {
+    if (view === 'remote') views.remote.show(raw === 'apps' ? 'apps' : 'screen');
+    else views.remote.hide();
+  };
+
   const ws = createWsClient({
     role,
     token,
@@ -132,6 +146,7 @@ function boot() {
             applyHash();
             views.device.startReporting((m) => ws.send(m));
           }
+          views.remote.resync(); // a reconnect drops the screen subscription
           refreshFiles();
           break;
         case 'presence': {
@@ -168,6 +183,12 @@ function boot() {
         case 'input-result':
           views.remote.onResult(msg);
           break;
+        case 'apps-list':
+          views.remote.onApps(msg);
+          break;
+        case 'screen-frame':
+          views.remote.onFrame(msg);
+          break;
         case 'file-added':
           store.files = [msg.file, ...store.files.filter((f) => f.id !== msg.file.id)];
           store.emit();
@@ -185,7 +206,9 @@ function boot() {
             localStorage.removeItem('aerolink-token');
             setState('unauthorized');
             setConnPill(false, 'Not paired');
-          } else if (msg.code !== 'not-supported') {
+          } else if (msg.code === 'not-supported' || msg.code === 'screen-failed') {
+            views.remote.onScreenError(msg);
+          } else {
             toast(msg.message || 'Something went wrong', true);
           }
           break;

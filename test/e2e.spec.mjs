@@ -30,10 +30,8 @@ function check(label, ok) {
   if (!ok) failures++;
 }
 
-const server = createAeroServer({
-  port: 0,
-  adapter: createStubAdapter({ storageDir: path.join(ART, 'store') }),
-});
+const adapter = createStubAdapter({ storageDir: path.join(ART, 'store'), frameIntervalMs: 250 });
+const server = createAeroServer({ port: 0, adapter });
 const { port } = await server.listen();
 const base = `http://127.0.0.1:${port}`;
 
@@ -96,9 +94,43 @@ try {
   check('clipboard round-trips phone -> mac -> host view', false);
 }
 
-// --- remote control surfaces the non-mac stub message ---
+// --- clipboard: a Mac-side copy reaches the phone by itself ---
+adapter.setClipboard('copied on the mac');
+try {
+  await phone.waitForFunction(
+    () => document.querySelector('#clip-text').value === 'copied on the mac',
+    { timeout: 4000 }
+  );
+  check('a Mac clipboard change auto-syncs to the phone', true);
+} catch {
+  check('a Mac clipboard change auto-syncs to the phone', false);
+}
+
+// --- remote mode 1: the launcher renders gel app icons and can search ---
 await phone.click('#back-btn');
-await phone.click('[data-tile="remote"]');
+await phone.click('[data-tile="apps"]');
+await phone.waitForSelector('#remote-mode-apps.active');
+await phone.waitForSelector('.app-chip');
+const chipCount = await phone.$$eval('.app-chip', (c) => c.length);
+check(`launcher lists the stub apps (${chipCount})`, chipCount >= 10);
+await phone.fill('#launcher-search', 'safari');
+await phone.waitForFunction(() => document.querySelectorAll('.app-chip').length === 1);
+check('launcher search narrows the grid', true);
+await phone.screenshot({ path: path.join(ART, 'phone-launcher.png') });
+await phone.fill('#launcher-search', '');
+
+// --- remote mode 2: the full screen streams live frames ---
+await phone.click('#remote-seg [data-mode="screen"]');
+await phone.waitForSelector('#remote-mode-screen.active');
+try {
+  await phone.waitForSelector('#screen-img.live', { timeout: 4000 });
+  check('full-screen mode shows live frames from the adapter', true);
+} catch {
+  check('full-screen mode shows live frames from the adapter', false);
+}
+await phone.screenshot({ path: path.join(ART, 'phone-fullscreen.png') });
+
+// --- remote control surfaces the non-mac stub message ---
 await phone.click('[data-key="return"]');
 await phone.waitForSelector('.remote-note.show');
 const note = await phone.$eval('.remote-note', (n) => n.textContent);
