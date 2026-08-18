@@ -8,7 +8,7 @@
   "scripts": {
     "start": "electron .",
     "dev:server": "node scripts/dev-server.js",
-    "test": "node --test test/",
+    "test": "node --test \"test/*.test.js\"",
     "test:e2e": "node test/e2e.spec.mjs",
     "dist:mac": "electron-builder --mac"
   },
