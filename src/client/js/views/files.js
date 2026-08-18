@@ -8,6 +8,12 @@ export function initFiles({ store, api, withToken }) {
   const track = $('#up-track');
   const fill = $('#up-fill');
 
+  // drag & drop is desktop language — speak touch on the phone
+  if (store.role === 'phone-client') {
+    $('#drop-title').textContent = 'Tap to choose files';
+    $('#drop-sub').textContent = 'They appear on the Mac instantly.';
+  }
+
   $('#pick-btn').addEventListener('click', (e) => { e.stopPropagation(); input.click(); });
   zone.addEventListener('click', () => input.click());
   input.addEventListener('change', () => uploadAll([...input.files]));

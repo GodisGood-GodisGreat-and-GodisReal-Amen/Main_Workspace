@@ -10,6 +10,12 @@ One codebase, two faces:
 - **On the phone** (any modern browser, installable as a PWA): the *same app*
   in a simplified single-column layout tuned for small screens.
 
+![The AeroLink menu on the Mac after a phone links](docs/host-menu.jpg)
+
+| Pairing on the Mac | The phone menu | Full-screen remote |
+|---|---|---|
+| ![Waiting scene with QR and USB pairing](docs/host-waiting.jpg) | ![Single-column phone menu](docs/phone-menu.jpg) | ![Live Mac screen on the phone](docs/phone-fullscreen.jpg) |
+
 ## What it does
 
 | Bubble | Feature |
@@ -74,6 +80,8 @@ npm run test:e2e   # Playwright: transformation, responsive layouts, clipboard
 The stub adapter (used by `npm run dev:server` and the tests) fakes the
 macOS-only seams so everything is demoable anywhere: a twelve-app launcher
 list and an animated SVG "screen" stream.
+
+The README screenshots regenerate with `node scripts/screenshots.mjs`.
 
 ## How it's put together
 

@@ -75,6 +75,7 @@ function createAeroServer({ port = 8890, host = '0.0.0.0', adapter, log = () => 
       res.writeHead(200, {
         'Content-Type': MIME[path.extname(full)] || 'application/octet-stream',
         'Cache-Control': 'no-cache',
+        'X-Content-Type-Options': 'nosniff',
       });
       res.end(data);
     });
@@ -124,7 +125,10 @@ function createAeroServer({ port = 8890, host = '0.0.0.0', adapter, log = () => 
       }
 
       if (p === '/api/upload' && req.method === 'POST') {
-        const rawName = decodeURIComponent(req.headers['x-filename'] || 'file');
+        let rawName = req.headers['x-filename'] || 'file';
+        try {
+          rawName = decodeURIComponent(rawName);
+        } catch { /* malformed escape — keep the raw header, sanitized below */ }
         const from = isHost(req, url) ? 'mac' : 'phone';
         try {
           const file = await store.saveStream(req, rawName, from);
@@ -149,10 +153,12 @@ function createAeroServer({ port = 8890, host = '0.0.0.0', adapter, log = () => 
           return;
         }
         if (fileMatch[2] && req.method === 'GET') {
+          const asciiName = file.name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
           res.writeHead(200, {
             'Content-Type': 'application/octet-stream',
             'Content-Length': file.size,
-            'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+            'Content-Disposition':
+              `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(file.name)}`,
           });
           fs.createReadStream(file.path).pipe(res);
           return;

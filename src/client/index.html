@@ -4,7 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>AeroLink</title>
+  <meta name="description" content="Link your Android phone to your Mac — files, clipboard, and remote control in a glossy Frutiger Aero shell.">
   <meta name="theme-color" content="#bfe6ff">
+  <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23eafaff'/%3E%3Cstop offset='.5' stop-color='%232f8fd9'/%3E%3Cstop offset='1' stop-color='%238fd0f7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='4' y='4' width='92' height='92' rx='24' fill='url(%23g)'/%3E%3Cpath d='M51 24c10 14 19 23 19 34a19 19 0 1 1-38 0c0-11 9-20 19-34z' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/css/tokens.css">
@@ -22,10 +24,10 @@
 
   <div id="app">
     <header class="topbar glass">
-      <button id="back-btn" class="aero-btn ghost" style="min-height:38px;padding:6px 16px">&#8249; Back</button>
-      <div class="brand"><span id="brand-icon"></span> AeroLink</div>
+      <button id="back-btn" class="aero-btn ghost">&#8249; Back</button>
+      <div class="brand"><span id="brand-icon"></span><span class="brand-name">AeroLink</span></div>
       <div class="spacer"></div>
-      <span id="conn-pill" class="pill"><span class="dot"></span><span id="conn-label">Starting&hellip;</span></span>
+      <span id="conn-pill" class="pill" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="conn-label">Starting&hellip;</span></span>
     </header>
 
     <main>
@@ -108,16 +110,16 @@
             <h2><span data-icon="remote"></span> Remote control</h2>
             <div id="remote-phone-ui">
               <div class="seg" id="remote-seg" role="tablist" aria-label="Remote control mode">
-                <button class="seg-btn" type="button" role="tab" data-mode="apps" aria-selected="false">&#10022; Launcher</button>
-                <button class="seg-btn" type="button" role="tab" data-mode="screen" aria-selected="false">&#128421; Full screen</button>
+                <button class="seg-btn" type="button" role="tab" id="seg-apps" data-mode="apps" aria-selected="false" aria-controls="remote-mode-apps">&#10022; Launcher</button>
+                <button class="seg-btn" type="button" role="tab" id="seg-screen" data-mode="screen" aria-selected="false" aria-controls="remote-mode-screen">&#128421; Full screen</button>
               </div>
 
               <!-- mode 1: Frutiger Aero launcher — gel app icons on white -->
-              <div class="remote-mode" id="remote-mode-apps">
+              <div class="remote-mode" id="remote-mode-apps" role="tabpanel" aria-labelledby="seg-apps">
                 <div class="launcher">
                   <div class="launcher-bar">
                     <input class="aero-input" id="launcher-search" type="search" placeholder="Search Mac apps&hellip;" aria-label="Search Mac apps">
-                    <button class="aero-btn ghost" id="launcher-refresh" title="Reload the app list">&#8635;</button>
+                    <button class="aero-btn ghost" id="launcher-refresh" title="Reload the app list" aria-label="Reload the app list">&#8635;</button>
                   </div>
                   <p class="launcher-empty" id="launcher-empty">Loading the Mac&rsquo;s apps&hellip;</p>
                   <div class="launcher-grid" id="launcher-grid" role="list"></div>
@@ -125,7 +127,7 @@
               </div>
 
               <!-- mode 2: the whole screen, live, tap to click -->
-              <div class="remote-mode" id="remote-mode-screen">
+              <div class="remote-mode" id="remote-mode-screen" role="tabpanel" aria-labelledby="seg-screen">
               <div class="screen-stage" id="screen-stage">
                 <img id="screen-img" alt="Live view of the Mac screen" draggable="false">
                 <div class="screen-hint" id="screen-hint">Connecting to the Mac&rsquo;s screen&hellip;</div>
@@ -140,19 +142,19 @@
                 <div class="remote-row">
                   <button class="aero-btn ghost" data-key="escape">Esc</button>
                   <button class="aero-btn ghost" data-key="tab">Tab</button>
-                  <button class="aero-btn ghost" data-key="backspace">&#9003;</button>
+                  <button class="aero-btn ghost" data-key="backspace" aria-label="Backspace">&#9003;</button>
                   <button class="aero-btn ghost" data-key="return">Return</button>
                 </div>
                 <div class="remote-row">
-                  <button class="aero-btn ghost" data-key="left">&#8592;</button>
-                  <button class="aero-btn ghost" data-key="up">&#8593;</button>
-                  <button class="aero-btn ghost" data-key="down">&#8595;</button>
-                  <button class="aero-btn ghost" data-key="right">&#8594;</button>
+                  <button class="aero-btn ghost" data-key="left" aria-label="Arrow left">&#8592;</button>
+                  <button class="aero-btn ghost" data-key="up" aria-label="Arrow up">&#8593;</button>
+                  <button class="aero-btn ghost" data-key="down" aria-label="Arrow down">&#8595;</button>
+                  <button class="aero-btn ghost" data-key="right" aria-label="Arrow right">&#8594;</button>
                 </div>
                 <div class="remote-row">
-                  <button class="aero-btn sun" data-media="prev">&#9198;</button>
-                  <button class="aero-btn sun" data-media="playpause">&#9199;</button>
-                  <button class="aero-btn sun" data-media="next">&#9197;</button>
+                  <button class="aero-btn sun" data-media="prev" aria-label="Previous track">&#9198;</button>
+                  <button class="aero-btn sun" data-media="playpause" aria-label="Play or pause">&#9199;</button>
+                  <button class="aero-btn sun" data-media="next" aria-label="Next track">&#9197;</button>
                 </div>
                 <div class="remote-row">
                   <button class="aero-btn green" data-volume="down">Vol &#8722;</button>

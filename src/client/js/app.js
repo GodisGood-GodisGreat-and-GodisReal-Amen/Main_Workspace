@@ -189,11 +189,14 @@ function boot() {
         case 'screen-frame':
           views.remote.onFrame(msg);
           break;
-        case 'file-added':
+        case 'file-added': {
           store.files = [msg.file, ...store.files.filter((f) => f.id !== msg.file.id)];
           store.emit();
-          if (msg.file) toast(`Received “${msg.file.name}”`);
+          // the uploader already saw a "Sent" toast — only announce arrivals
+          const fromMe = (msg.file.from === 'mac') === isHost;
+          if (!fromMe) toast(`Received “${msg.file.name}”`);
           break;
+        }
         case 'file-removed':
           store.files = store.files.filter((f) => f.id !== msg.id);
           store.emit();

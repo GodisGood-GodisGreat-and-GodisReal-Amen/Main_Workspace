@@ -41,6 +41,12 @@ export function initRemote({ store, send, isHost }) {
     $('#remote-mode-apps').classList.toggle('active', mode === 'apps');
     $('#remote-mode-screen').classList.toggle('active', mode === 'screen');
     if (mode === 'apps' && visible && !isHost && apps === null) requestApps();
+    // keep the hash truthful so reload / share lands on the same mode,
+    // without stacking history entries per toggle
+    const wantHash = mode === 'apps' ? '#apps' : '#remote';
+    if (visible && !isHost && location.hash !== wantHash) {
+      history.replaceState(null, '', wantHash);
+    }
     syncStream();
   }
 
@@ -184,8 +190,25 @@ export function initRemote({ store, send, isHost }) {
   }
 
   // ---- trackpad: one finger moves, tap clicks, two fingers scroll ----
-  const sendMove = throttle((dx, dy) => send({ type: 'input', kind: 'move', dx, dy }), 33);
-  const sendScroll = throttle((dy) => send({ type: 'input', kind: 'scroll', dy }), 66);
+  // Deltas are accumulated between flushes so fast swipes lose no distance —
+  // a plain throttle would silently drop every event inside the window.
+  let accX = 0;
+  let accY = 0;
+  let accScroll = 0;
+  const flushMove = throttle(() => {
+    const dx = Math.round(accX);
+    const dy = Math.round(accY);
+    accX -= dx;
+    accY -= dy;
+    if (dx || dy) send({ type: 'input', kind: 'move', dx, dy });
+  }, 33);
+  const flushScroll = throttle(() => {
+    const dy = Math.round(accScroll);
+    accScroll -= dy;
+    if (dy) send({ type: 'input', kind: 'scroll', dy });
+  }, 66);
+  const sendMove = (dx, dy) => { accX += dx; accY += dy; flushMove(); };
+  const sendScroll = (dy) => { accScroll += dy; flushScroll(); };
 
   let last = null;
   let startAt = 0;
@@ -205,8 +228,8 @@ export function initRemote({ store, send, isHost }) {
     const dy = e.clientY - last.y;
     moved += Math.abs(dx) + Math.abs(dy);
     last = { x: e.clientX, y: e.clientY };
-    if (fingers >= 2) sendScroll(Math.round(dy));
-    else sendMove(Math.round(dx * 1.6), Math.round(dy * 1.6));
+    if (fingers >= 2) sendScroll(dy);
+    else sendMove(dx * 1.6, dy * 1.6);
   });
   const end = () => {
     if (fingers === 1 && moved < 8 && Date.now() - startAt < 260) {
@@ -238,7 +261,10 @@ export function initRemote({ store, send, isHost }) {
 
   let lastNoteAt = 0;
   function onResult(msg) {
-    if (msg.ok) return;
+    if (msg.ok) {
+      note.classList.remove('show'); // things work again — retire the warning
+      return;
+    }
     // pointer moves stream at 30 Hz — surface a failure once, not per event
     if (Date.now() - lastNoteAt < 4000) return;
     lastNoteAt = Date.now();

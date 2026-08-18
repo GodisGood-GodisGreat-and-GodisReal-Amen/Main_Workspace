@@ -9,7 +9,16 @@ export function initClipboard({ store, send, isHost }) {
   const text = $('#clip-text');
   const note = $('#clip-note');
 
+  // the same view serves both roles — word the buttons for each side
+  $('#clip-send').textContent = isHost ? 'Send to the phone' : 'Send to the Mac';
+  $('#clip-fetch').textContent = isHost ? 'Load Mac clipboard' : 'Fetch Mac clipboard';
+
   $('#clip-send').addEventListener('click', () => {
+    if (!text.value) {
+      text.focus();
+      toast('Nothing to send yet — type or paste something first');
+      return;
+    }
     send({ type: 'clipboard-set', text: text.value });
     toast(isHost ? 'Sent to phone' : 'Sent to the Mac clipboard');
   });

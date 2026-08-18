@@ -13,7 +13,9 @@ function tokensEqual(a, b) {
   const bufB = Buffer.alloc(64);
   bufA.write(a.slice(0, 64));
   bufB.write(b.slice(0, 64));
-  return a.length === b.length && crypto.timingSafeEqual(bufA, bufB);
+  // compare first so the padded comparison always runs, then check length
+  const contentEqual = crypto.timingSafeEqual(bufA, bufB);
+  return contentEqual && a.length === b.length;
 }
 
 module.exports = { generateToken, tokensEqual };

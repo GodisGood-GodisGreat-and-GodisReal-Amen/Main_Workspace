@@ -44,7 +44,6 @@ await host.goto(`${base}/?role=host&hostToken=${server.hostToken}`);
 await host.waitForSelector('body[data-state="waiting"]');
 await host.waitForFunction(() => document.querySelector('#qr-img').src.startsWith('data:image/png'));
 check('host boots into the waiting scene with a QR code', true);
-const hostCols = await host.$eval('#menu-grid', (g) => getComputedStyle(g).gridTemplateColumns.split(' ').length);
 await host.screenshot({ path: path.join(ART, 'host-waiting.png') });
 
 // --- phone: Android-like context joins with the pairing token ---
@@ -72,8 +71,10 @@ await host.screenshot({ path: path.join(ART, 'host-menu.png') });
 await phone.screenshot({ path: path.join(ART, 'phone-menu.png') });
 
 // --- responsive: desktop grid vs simplified single column ---
+// measure while the grids are visible so the track lists are fully resolved
+const hostCols = await host.$eval('#menu-grid', (g) => getComputedStyle(g).gridTemplateColumns.split(' ').length);
 const phoneCols = await phone.$eval('#menu-grid', (g) => getComputedStyle(g).gridTemplateColumns.split(' ').length);
-check(`desktop menu is a multi-column grid (${hostCols} cols)`, hostCols > 1);
+check(`desktop menu is a multi-column grid (${hostCols} tracks)`, hostCols > 1);
 check('phone menu is a single column', phoneCols === 1);
 
 // --- clipboard round trip through the stub adapter ---
@@ -83,6 +84,9 @@ await phone.fill('#clip-text', 'aero e2e clipboard');
 await phone.click('#clip-send');
 await host.click('[data-tile="clipboard"]');
 await host.waitForSelector('body[data-state="view"]');
+const hostSend = await host.$eval('#clip-send', (b) => b.textContent);
+const phoneSend = await phone.$eval('#clip-send', (b) => b.textContent);
+check('clipboard buttons speak each role\'s dialect', hostSend === 'Send to the phone' && phoneSend === 'Send to the Mac');
 await host.click('#clip-fetch');
 try {
   await host.waitForFunction(

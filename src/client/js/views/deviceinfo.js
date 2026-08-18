@@ -21,10 +21,13 @@ export function initDeviceInfo({ store, isHost }) {
     };
   }
 
+  let reportTimer = null;
   function startReporting(send) {
     const report = async () => send({ type: 'device-info', info: await collectInfo() });
     report();
-    setInterval(report, 30000);
+    // called again after every WS reconnect — replace, never stack, the timer
+    clearInterval(reportTimer);
+    reportTimer = setInterval(report, 30000);
   }
 
   function card(k, v, s = '') {

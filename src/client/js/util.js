@@ -32,17 +32,23 @@ export function fmtTime(ts) {
 export function throttle(fn, ms) {
   let last = 0;
   let queued = null;
+  let pendingArgs = null;
   return (...args) => {
     const now = Date.now();
     if (now - last >= ms) {
       last = now;
       fn(...args);
-    } else if (!queued) {
-      queued = setTimeout(() => {
-        queued = null;
-        last = Date.now();
-        fn(...args);
-      }, ms - (now - last));
+    } else {
+      // trailing call fires with the LATEST args, not the first queued ones
+      pendingArgs = args;
+      if (!queued) {
+        queued = setTimeout(() => {
+          queued = null;
+          last = Date.now();
+          fn(...pendingArgs);
+          pendingArgs = null;
+        }, ms - (now - last));
+      }
     }
   };
 }
