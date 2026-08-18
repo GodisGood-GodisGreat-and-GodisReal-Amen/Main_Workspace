@@ -1,6 +1,6 @@
 // AeroLink client — role detection, state machine, transformation, routing.
-import { $, toast } from './util.js';
-import { icon } from './icons.js';
+import { $, $$, toast } from './util.js';
+import { icon, glyph } from './icons.js';
 import { createWsClient } from './ws-client.js';
 import { initWaiting } from './views/waiting.js';
 import { initMenu } from './views/menu.js';
@@ -25,6 +25,11 @@ if (!isHost) {
 
 document.body.dataset.role = role;
 $('#brand-icon').innerHTML = icon('drop', 'aqua', 30);
+
+// swap static glyph placeholders for inline SVG — one icon set, no platform emoji
+$$('[data-glyph]').forEach((slot) => {
+  slot.outerHTML = glyph(slot.dataset.glyph, Number(slot.dataset.glyphSize) || 18);
+});
 
 // ---- tiny store ----
 export const store = {

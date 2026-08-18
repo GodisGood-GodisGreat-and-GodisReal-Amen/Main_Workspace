@@ -1,6 +1,6 @@
 // The Frutiger Aero menu: glossy tile grid on the Mac, gel list on the phone.
 import { $, el, escapeHtml } from '../util.js';
-import { icon } from '../icons.js';
+import { icon, glyph } from '../icons.js';
 
 const TILES = [
   { id: 'files', icon: 'files', label: 'Files', hint: 'Beam files across', variant: 'aqua' },
@@ -26,7 +26,7 @@ export function initMenu({ store, isHost, openView }) {
         <span class="label">${escapeHtml(t.label)}</span>
         <span class="hint">${escapeHtml(t.hint)}</span>
       </span>
-      <span class="chev">&#8250;</span>`;
+      <span class="chev">${glyph('chevron-right', 20)}</span>`;
     tile.addEventListener('click', () => openView(t.id));
     grid.appendChild(tile);
   });

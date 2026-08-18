@@ -120,6 +120,10 @@ body {
 }
 .aero-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
 
+/* small inline SVG glyphs (icons.js glyph()): sit on the text baseline in
+   prose, center themselves in flex rows, never shrink */
+svg.glyph { display: inline-block; vertical-align: -0.155em; flex: none; }
+
 /* keyboard navigation: a clear aqua halo, no ring for pointer users */
 :focus-visible {
   outline: 3px solid rgba(47, 143, 217, 0.65);

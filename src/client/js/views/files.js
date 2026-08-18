@@ -1,5 +1,6 @@
 // File sharing: XHR upload with a gel progress bar, drag & drop, live list.
 import { $, el, toast, fmtBytes, fmtTime, escapeHtml } from '../util.js';
+import { glyph } from '../icons.js';
 
 export function initFiles({ store, api, withToken }) {
   const zone = $('#drop-zone');
@@ -71,7 +72,7 @@ export function initFiles({ store, api, withToken }) {
           <div class="fmeta">${fmtBytes(f.size)} · from ${f.from === 'mac' ? 'the Mac' : 'the phone'} · ${fmtTime(f.ts)}</div>
         </div>
         <a class="aero-btn mini" href="${withToken(`/api/files/${f.id}/download`)}" download>Save</a>
-        <button class="aero-btn ghost mini" data-del="${f.id}">✕</button>`;
+        <button class="aero-btn ghost mini" data-del="${f.id}" aria-label="Delete ${escapeHtml(f.name)}" title="Delete">${glyph('close', 16)}</button>`;
       row.querySelector('[data-del]').addEventListener('click', () => removeFile(f.id));
       list.appendChild(row);
     }

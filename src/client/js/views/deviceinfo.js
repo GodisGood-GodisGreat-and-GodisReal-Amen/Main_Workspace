@@ -1,6 +1,7 @@
 // Device dashboard: glossy widget cards. The phone reports its own vitals
 // (battery, network, screen) over WS; the host renders one card set per phone.
 import { $, el, escapeHtml } from '../util.js';
+import { glyph } from '../icons.js';
 
 export function initDeviceInfo({ store, isHost }) {
   const grid = $('#device-cards');
@@ -41,7 +42,7 @@ export function initDeviceInfo({ store, isHost }) {
     const pct = info?.battery ? Math.round(info.battery.level * 100) : null;
     c.innerHTML = `
       <div class="k">Battery</div>
-      <div class="v">${pct === null ? '—' : `${pct}%${info.battery.charging ? ' ⚡' : ''}`}</div>
+      <div class="v">${pct === null ? '—' : `${pct}%${info.battery.charging ? ` ${glyph('bolt', 16)}` : ''}`}</div>
       <div class="battery-shell"><div class="battery-fill" style="width:${pct ?? 0}%"></div></div>`;
     return c;
   }

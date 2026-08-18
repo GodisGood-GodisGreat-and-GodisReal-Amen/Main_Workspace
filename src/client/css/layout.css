@@ -222,7 +222,7 @@ body[data-role="phone-client"] .tile .hint { text-align: left; }
 body[data-role="phone-client"] .tile .chev {
   display: block;
   margin-left: auto;
-  font-size: 22px;
+  line-height: 0;
   color: var(--aero-ink-soft);
 }
 body[data-role="phone-client"] #scene-menu .stage { padding: 24px 18px 28px; }
@@ -236,7 +236,7 @@ body[data-role="phone-client"] main { padding: 14px 10px 30px; align-items: star
   .tile .badge { width: 52px; height: 52px; flex: none; }
   .tile .text { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; text-align: left; }
   .tile .hint { text-align: left; }
-  .tile .chev { display: block; margin-left: auto; font-size: 22px; color: var(--aero-ink-soft); }
+  .tile .chev { display: block; margin-left: auto; line-height: 0; color: var(--aero-ink-soft); }
   #scene-menu .stage { padding: 24px 18px 28px; }
   #scene-view .stage { padding: 22px 18px 30px; }
   .topbar { margin: 10px 10px 0; }

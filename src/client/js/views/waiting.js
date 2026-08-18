@@ -1,11 +1,12 @@
 // Host pairing scene: QR code, typed URL, USB status line.
-import { $ } from '../util.js';
+import { $, escapeHtml } from '../util.js';
+import { glyph } from '../icons.js';
 
 const USB_HINTS = {
-  absent: '🔌 Install Android platform-tools (adb) for cable pairing — Wi-Fi works either way.',
-  'no-device': '🔌 Plug your phone in with a USB cable.',
-  unauthorized: '📱 Tap “Allow USB debugging” on your phone.',
-  ready: '✅ Cable linked — opening AeroLink on your phone…',
+  absent: { icon: 'usb', text: 'Install Android platform-tools (adb) for cable pairing — Wi-Fi works either way.' },
+  'no-device': { icon: 'usb', text: 'Plug your phone in with a USB cable.' },
+  unauthorized: { icon: 'phone', text: 'Tap “Allow USB debugging” on your phone.' },
+  ready: { icon: 'check', text: 'Cable linked — opening AeroLink on your phone…' },
 };
 
 export function initWaiting({ api, isHost }) {
@@ -26,7 +27,10 @@ export function initWaiting({ api, isHost }) {
 
   function onUsbStatus(msg) {
     const line = $('#usb-line');
-    if (line) line.textContent = msg.hint || USB_HINTS[msg.adb] || USB_HINTS.absent;
+    if (!line) return;
+    // server hints arrive as plain text — pair them with the cable glyph
+    const hint = msg.hint ? { icon: 'usb', text: msg.hint } : USB_HINTS[msg.adb] || USB_HINTS.absent;
+    line.innerHTML = `${glyph(hint.icon, 20)}<span>${escapeHtml(hint.text)}</span>`;
   }
 
   return { onUsbStatus };

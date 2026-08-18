@@ -48,10 +48,64 @@ const GLYPHS = {
     <path class="cut" d="M42 58a10.5 10.5 0 0 0 7 9.5" style="stroke-width:4.4"/>`,
 };
 
+// Small UI glyphs: crisp stroke icons on a 24px grid that inherit the text
+// color, so every control renders the same on Android, macOS, and desktop
+// browsers instead of falling back to platform emoji.
+const UI_GLYPHS = {
+  'chevron-left': '<path d="m14.5 5.5-6.5 6.5 6.5 6.5"/>',
+  'chevron-right': '<path d="m9.5 5.5 6.5 6.5-6.5 6.5"/>',
+  wifi: `
+    <path d="M2.8 9.6a14 14 0 0 1 18.4 0"/>
+    <path d="M6 13a9.4 9.4 0 0 1 12 0"/>
+    <path d="M9.3 16.4a4.8 4.8 0 0 1 5.4 0"/>
+    <circle cx="12" cy="19.6" r="1.4" fill="currentColor" stroke="none"/>`,
+  usb: `
+    <rect x="8" y="3" width="8" height="9.5" rx="1.6"/>
+    <path d="M10.6 6v2.2M13.4 6v2.2M12 12.5V17a3.4 3.4 0 0 1-3.4 3.4H7"/>`,
+  phone: `
+    <rect x="7" y="2.8" width="10" height="18.4" rx="2.6"/>
+    <path d="M10.6 17.8h2.8"/>`,
+  check: '<path d="m4.5 12.8 4.8 4.7L19.5 6.5"/>',
+  sparkle: `
+    <path d="M12 3.2c.9 4.5 2.4 6 6.8 8.8-4.4 2.8-5.9 4.3-6.8 8.8-.9-4.5-2.4-6-6.8-8.8 4.4-2.8 5.9-4.3 6.8-8.8z"
+      fill="currentColor" stroke="currentColor" stroke-width="1.2"/>`,
+  monitor: `
+    <rect x="3" y="4.4" width="18" height="12.6" rx="2"/>
+    <path d="M9.4 20.6h5.2M12 17v3.6"/>`,
+  refresh: `
+    <path d="M19.6 12a7.6 7.6 0 1 1-2.2-5.4"/>
+    <path d="M19.8 3.2v4.4h-4.4"/>`,
+  backspace: `
+    <path d="M9 4.8h9.2a2 2 0 0 1 2 2v10.4a2 2 0 0 1-2 2H9L2.8 12z"/>
+    <path d="m10.8 9.4 5.2 5.2m0-5.2-5.2 5.2"/>`,
+  'arrow-left': '<path d="M20 12H4m6-6-6 6 6 6"/>',
+  'arrow-up': '<path d="M12 20V4m-6 6 6-6 6 6"/>',
+  'arrow-down': '<path d="M12 4v16m-6-6 6 6 6-6"/>',
+  'arrow-right': '<path d="M4 12h16m-6-6 6 6-6 6"/>',
+  'media-prev': `
+    <path d="M6 5.2v13.6"/>
+    <path d="M19 5.8 10 12l9 6.2z" fill="currentColor" stroke="currentColor" stroke-width="1.6"/>`,
+  'media-play-pause': `
+    <path d="M4.2 5.8 12 12l-7.8 6.2z" fill="currentColor" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M15.4 5.6v12.8M19.8 5.6v12.8"/>`,
+  'media-next': `
+    <path d="M18 5.2v13.6"/>
+    <path d="M5 5.8 14 12l-9 6.2z" fill="currentColor" stroke="currentColor" stroke-width="1.6"/>`,
+  close: '<path d="m6.2 6.2 11.6 11.6m0-11.6L6.2 17.8"/>',
+  bolt: `
+    <path d="M13.2 2.6 5.4 13.3h5L10.8 21.4l7.8-10.7h-5z"
+      fill="currentColor" stroke="currentColor" stroke-width="1.4"/>`,
+};
+
 let uid = 0;
 
 export function icon(name, variant = 'aqua', size = 96) {
   return chassis(GLYPHS[name] || GLYPHS.drop, variant, size);
+}
+
+export function glyph(name, size = 18) {
+  const g = UI_GLYPHS[name] || UI_GLYPHS.sparkle;
+  return `<svg class="glyph" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${g}</svg>`;
 }
 
 // Launcher icons: same gel chassis, the app's initials as the glyph. The
