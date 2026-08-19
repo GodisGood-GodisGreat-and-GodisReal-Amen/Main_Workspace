@@ -1,0 +1,14 @@
+appId: com.aerolink.app
+productName: AeroLink
+directories:
+  output: dist
+files:
+  - "src/**/*"
+  - "package.json"
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.utilities
+  # Unsigned by default. Add `identity` + notarization config for distribution;
+  # for personal use, right-click → Open bypasses Gatekeeper on first launch.

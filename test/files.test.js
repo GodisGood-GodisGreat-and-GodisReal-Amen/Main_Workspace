@@ -1,0 +1,74 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { Readable } = require('stream');
+const { createFileStore, sanitizeFilename } = require('../src/server/files');
+const { createAdbWatcher } = require('../src/main/adb');
+
+function tmpDir() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'aerolink-files-'));
+}
+
+test('sanitizeFilename strips paths, control chars and separators', () => {
+  assert.equal(sanitizeFilename('../../etc/passwd'), 'passwd');
+  assert.equal(sanitizeFilename('a\u0000b\u001fc.txt'), 'abc.txt');
+  assert.equal(sanitizeFilename('we<ir|d?.txt'), 'weird.txt');
+  assert.equal(sanitizeFilename('normal file.txt'), 'normal file.txt');
+  assert.equal(sanitizeFilename('..'), 'file');
+  assert.equal(sanitizeFilename(''), 'file');
+});
+
+test('store persists an index and rebuilds from disk', async () => {
+  const dir = tmpDir();
+  let store = createFileStore(dir);
+  const file = await store.saveStream(Readable.from(['abc']), 'keep.txt', 'phone');
+  assert.equal(file.size, 3);
+
+  // an untracked file dropped into the folder gets adopted on restart
+  fs.writeFileSync(path.join(dir, 'manual.txt'), 'manual');
+  store = createFileStore(dir);
+  const names = store.list().map((f) => f.name).sort();
+  assert.deepEqual(names, ['keep.txt', 'manual.txt']);
+
+  // deleting a tracked file on disk drops it from the next index
+  fs.rmSync(path.join(dir, 'keep.txt'));
+  store = createFileStore(dir);
+  assert.deepEqual(store.list().map((f) => f.name), ['manual.txt']);
+});
+
+test('adb watcher reports statuses through the full USB flow', async () => {
+  const statuses = [];
+  const calls = [];
+  let devicesOutput = 'List of devices attached\n';
+  const fakeExec = (cmd, args, opts, cb) => {
+    calls.push(args.join(' '));
+    if (args[0] === 'version') return cb(null, 'Android Debug Bridge 1.0');
+    if (args[0] === 'devices') return cb(null, devicesOutput);
+    return cb(null, '');
+  };
+  const watcher = createAdbWatcher({
+    port: 8890,
+    pairingToken: 'tok123',
+    onStatus: (s) => statuses.push(s),
+    exec: fakeExec,
+    pollMs: 20,
+  });
+  watcher.start();
+  await new Promise((r) => setTimeout(r, 60));
+  assert.equal(statuses.at(-1).adb, 'no-device');
+
+  devicesOutput = 'List of devices attached\nSERIAL123 unauthorized\n';
+  await new Promise((r) => setTimeout(r, 60));
+  assert.equal(statuses.at(-1).adb, 'unauthorized');
+
+  devicesOutput = 'List of devices attached\nSERIAL123 device product:pixel\n';
+  await new Promise((r) => setTimeout(r, 60));
+  watcher.stop();
+  assert.equal(statuses.at(-1).adb, 'ready');
+  assert.ok(calls.some((c) => c === '-s SERIAL123 reverse tcp:8890 tcp:8890'));
+  assert.ok(calls.some((c) => c.includes('android.intent.action.VIEW') && c.includes('token=tok123')));
+});

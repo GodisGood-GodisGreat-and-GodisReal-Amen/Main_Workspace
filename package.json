@@ -1,0 +1,24 @@
+{
+  "name": "aerolink",
+  "version": "0.1.0",
+  "description": "Frutiger Aero companion app linking a Mac and an Android phone over Wi-Fi or USB",
+  "main": "src/main/main.js",
+  "type": "commonjs",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev:server": "node scripts/dev-server.js",
+    "test": "node --test \"test/*.test.js\"",
+    "test:e2e": "node test/e2e.spec.mjs",
+    "dist:mac": "electron-builder --mac"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "electron": "^43.0.0",
+    "electron-builder": "^26.0.0",
+    "playwright-core": "^1.49.0"
+  }
+}

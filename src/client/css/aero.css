@@ -1,0 +1,212 @@
+/* AeroLink — core Frutiger Aero recipes: sky, glass, gel, bubbles */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font-ui);
+  color: var(--aero-ink);
+  background: #fff;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ------- the sky: white-forward with aurora glows and a water horizon ------- */
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(58vmax 42vmax at 82% -12%, rgba(255, 215, 110, 0.35), transparent 60%),
+    radial-gradient(70vmax 52vmax at 12% -18%, rgba(98, 180, 234, 0.4), transparent 62%),
+    radial-gradient(80vmax 40vmax at 50% 118%, rgba(126, 200, 80, 0.28), transparent 58%),
+    radial-gradient(60vmax 44vmax at 88% 108%, rgba(47, 143, 217, 0.32), transparent 60%),
+    linear-gradient(180deg, var(--aero-sky-top) 0%, var(--aero-sky-mid) 26%, #fdfeff 55%, var(--aero-sky-bottom) 100%);
+}
+
+/* soft light streaks, the "clean ad for water" look */
+.sky::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    linear-gradient(112deg, transparent 30%, rgba(255, 255, 255, 0.55) 42%, transparent 50%),
+    linear-gradient(104deg, transparent 58%, rgba(255, 255, 255, 0.35) 68%, transparent 76%);
+  mix-blend-mode: screen;
+}
+
+/* drifting glass bubbles */
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.95) 0 8%, rgba(255, 255, 255, 0.25) 26%, rgba(255, 255, 255, 0.02) 48%),
+    radial-gradient(circle at 70% 82%, rgba(120, 200, 255, 0.4), rgba(120, 200, 255, 0) 55%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 -6px 14px rgba(47, 143, 217, 0.18), 0 8px 22px rgba(18, 102, 168, 0.08);
+  animation: drift 20s ease-in-out infinite;
+}
+.bubble.b1 { width: 130px; height: 130px; left: 6%; top: 62%; animation-duration: 23s; }
+.bubble.b2 { width: 72px;  height: 72px;  left: 84%; top: 18%; animation-duration: 17s; animation-delay: -6s; }
+.bubble.b3 { width: 46px;  height: 46px;  left: 72%; top: 70%; animation-duration: 26s; animation-delay: -12s; }
+.bubble.b4 { width: 24px;  height: 24px;  left: 16%; top: 22%; animation-duration: 14s; animation-delay: -3s; }
+
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(14px, -26px) scale(1.04); }
+  66% { transform: translate(-10px, -8px) scale(0.98); }
+}
+
+/* ------- glass panel ------- */
+.glass {
+  position: relative;
+  background: var(--grad-panel);
+  backdrop-filter: blur(14px) saturate(1.35);
+  -webkit-backdrop-filter: blur(14px) saturate(1.35);
+  border: 1px solid var(--aero-line);
+  border-radius: var(--radius-bubble);
+  box-shadow: var(--shadow-float);
+}
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 1px 1px auto 1px;
+  height: 46%;
+  border-radius: calc(var(--radius-bubble) - 2px) calc(var(--radius-bubble) - 2px) 40% 40%;
+  background: var(--grad-sheen);
+  pointer-events: none;
+  z-index: 0;
+}
+/* keep content above the sheen so text stays crisp */
+.glass > * { position: relative; z-index: 1; }
+
+/* ------- gel buttons ------- */
+.aero-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 22px;
+  font: 600 15px/1 var(--font-ui);
+  color: #0d4b7a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+  background: var(--grad-aqua-btn);
+  border: 1px solid rgba(18, 102, 168, 0.45);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-tile);
+  cursor: pointer;
+  transition: transform 0.15s var(--ease-gel), box-shadow 0.15s ease, background 0.15s ease;
+  overflow: hidden;
+}
+.aero-btn::before {
+  content: "";
+  position: absolute;
+  inset: 2px 8% auto 8%;
+  height: 46%;
+  border-radius: var(--radius-pill);
+  background: var(--grad-sheen);
+  pointer-events: none;
+}
+.aero-btn:hover { background: var(--grad-aqua-btn-hover); transform: translateY(-1px); }
+.aero-btn:active { transform: translateY(1px) scale(0.985); box-shadow: var(--shadow-press); }
+.aero-btn.green { background: var(--grad-green-btn); border-color: rgba(77, 154, 46, 0.5); color: #2c5e12; }
+.aero-btn.sun { background: var(--grad-sun-btn); border-color: rgba(196, 148, 20, 0.5); color: #6e4e05; }
+.aero-btn.ghost {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(18, 102, 168, 0.25);
+  color: var(--aero-ink-soft);
+}
+.aero-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+/* keyboard navigation: a clear aqua halo, no ring for pointer users */
+:focus-visible {
+  outline: 3px solid rgba(47, 143, 217, 0.65);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.aero-btn:focus-visible, .tile:focus-visible, .seg-btn:focus-visible, .app-chip:focus-visible {
+  outline-offset: 3px;
+  border-radius: inherit;
+}
+
+/* ------- pills, chips, inputs ------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
+  font: 600 12.5px/1.2 var(--font-ui);
+  white-space: nowrap;
+  color: var(--aero-ink-soft);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--aero-line);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 8px rgba(18, 102, 168, 0.1);
+}
+.pill .dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffd2ce, #e2574b);
+  box-shadow: 0 0 6px rgba(226, 87, 75, 0.7);
+}
+.pill.online .dot {
+  background: radial-gradient(circle at 35% 30%, #d8ffc2, #58c33a);
+  box-shadow: 0 0 8px rgba(88, 195, 58, 0.8);
+}
+
+.aero-input, .aero-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  font: 400 15px/1.45 var(--font-ui);
+  color: var(--aero-ink);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(18, 102, 168, 0.3);
+  border-radius: 16px;
+  box-shadow: inset 0 2px 6px rgba(18, 102, 168, 0.12), inset 0 -1px 0 rgba(255, 255, 255, 0.9);
+  outline: none;
+}
+.aero-input:focus, .aero-textarea:focus {
+  border-color: var(--aero-water);
+  box-shadow: inset 0 2px 6px rgba(18, 102, 168, 0.12), 0 0 0 4px rgba(98, 180, 234, 0.35);
+}
+.aero-textarea { resize: vertical; min-height: 110px; }
+
+/* ------- toast ------- */
+#toast-zone {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 90;
+  pointer-events: none;
+}
+.toast {
+  padding: 11px 20px;
+  font: 600 13.5px/1.35 var(--font-ui);
+  color: #0d4b7a;
+  background: var(--grad-panel);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--aero-line);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-float);
+  animation: toast-in 0.35s var(--ease-gel), toast-out 0.3s ease 3.4s forwards;
+  max-width: min(86vw, 480px);
+  text-align: center;
+}
+.toast.err { color: #8c2f26; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(14px) scale(0.92); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(8px) scale(0.95); } }
+
+/* ------- scrollbars (webkit) ------- */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.4); }
+::-webkit-scrollbar-thumb {
+  background: var(--grad-aqua-btn);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-pill);
+}
