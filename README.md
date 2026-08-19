@@ -36,6 +36,41 @@ One codebase, two faces:
    installed on the Mac, AeroLink sets up `adb reverse` and opens itself on
    the phone automatically. No adb? Wi-Fi still works.
 
+## Using AeroLink from your phone
+
+Once paired, AeroLink runs in your phone's browser (Chrome or any modern
+browser) as a simplified single-column app. The pairing token is saved
+locally, so a reload stays linked — and you can **Add to Home screen** to
+install it as a PWA. Then tap a bubble:
+
+- **Files** — tap **Tap to choose files** to send one to the Mac (it lands in
+  `~/Downloads/AeroLink/`). Files sent *from* the Mac appear in the list; tap
+  **Save** to download. A gel progress bar tracks each transfer both ways.
+- **Clipboard** — type text and tap **Send to the Mac**. Anything you copy on
+  the Mac shows up here by itself. **Paste & send** grabs the phone's clipboard
+  and beams it over in one tap.
+- **Devices** — a dashboard of your phone's battery, network, and screen,
+  shared live with the Mac.
+- **Launcher** — a searchable grid of the Mac's apps as gel icons; tap one to
+  open it on the Mac.
+- **Full screen** — a live view of the whole Mac display. **Tap the picture to
+  click there, hold for a right-click.** Underneath sit a trackpad (glide to
+  move the pointer, tap to click, two fingers to scroll), a field to type on
+  the Mac, and key / media / volume buttons.
+
+A few things worth knowing:
+
+- **Remote control** (Launcher, Full screen, trackpad, keys) only drives a
+  **real Mac** — against the demo/dev server it reports "Remote control
+  requires the macOS host app." It also needs the Mac's Screen Recording /
+  Accessibility permissions (and `cliclick` for pointer control) — see
+  [macOS permissions](#macos-permissions) below.
+- **Clipboard over Wi-Fi:** Android Chrome blocks automatic clipboard *reads*
+  on plain-HTTP LAN pages, so **Paste & send** may need you to long-press the
+  box and paste manually, then Send. **USB pairing avoids this** (it runs over
+  `localhost`, which gets the full clipboard API). Mac → phone auto-sync always
+  works either way.
+
 ## Running it
 
 ```bash
