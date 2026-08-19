@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aerolink"
+version = "0.1.0"
+description = "Lossless link engine that keeps applications fast on very-low-bandwidth networks"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["low-bandwidth", "compression", "delta-sync", "networking", "sans-io"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: System :: Networking",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/GodisGood-GodisGreat-and-GodisReal-Amen/Main_Workspace"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["aerolink*"]
