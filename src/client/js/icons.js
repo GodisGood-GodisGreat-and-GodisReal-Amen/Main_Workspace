@@ -92,6 +92,9 @@ const UI_GLYPHS = {
     <path d="M18 5.2v13.6"/>
     <path d="M5 5.8 14 12l-9 6.2z" fill="currentColor" stroke="currentColor" stroke-width="1.6"/>`,
   close: '<path d="m6.2 6.2 11.6 11.6m0-11.6L6.2 17.8"/>',
+  leaf: `
+    <path d="M19.5 4.5C9 5.5 4.5 10.5 4.5 16c0 2 1.5 3.5 3.5 3.5 5.5 0 10.5-4.5 11.5-15z"/>
+    <path d="M4.5 19.5C8 13.5 12.5 9.5 17.5 7"/>`,
   bolt: `
     <path d="M13.2 2.6 5.4 13.3h5L10.8 21.4l7.8-10.7h-5z"
       fill="currentColor" stroke="currentColor" stroke-width="1.4"/>`,

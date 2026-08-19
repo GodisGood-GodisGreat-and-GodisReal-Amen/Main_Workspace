@@ -134,6 +134,19 @@ try {
 }
 await phone.screenshot({ path: path.join(ART, 'phone-fullscreen.png') });
 
+// --- eco toggle pins the low-bandwidth capture profile ---
+await phone.click('#eco-toggle');
+try {
+  await phone.waitForFunction(
+    () => document.querySelector('#stream-quality')?.textContent === 'Eco',
+    { timeout: 4000 }
+  );
+  check('eco toggle switches the stream to the eco profile', true);
+} catch {
+  check('eco toggle switches the stream to the eco profile', false);
+}
+await phone.click('#eco-toggle'); // back to auto for the remaining checks
+
 // --- remote control surfaces the non-mac stub message ---
 await phone.click('[data-key="return"]');
 await phone.waitForSelector('.remote-note.show');

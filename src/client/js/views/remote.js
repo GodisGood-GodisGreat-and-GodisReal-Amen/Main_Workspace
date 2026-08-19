@@ -68,6 +68,27 @@ export function initRemote({ store, send, isHost }) {
   }
 
   // ---- full-screen mode: live frames + tap-to-click ----
+  // Every rendered frame is acked so the server can pace the stream to the
+  // link (next frame only once this one arrived) — that's what keeps the
+  // full-screen mode usable on slow connections.
+  const qualityLabel = $('#stream-quality');
+  const ecoBtn = $('#eco-toggle');
+  const PROFILE_NAMES = { hd: 'HD', balanced: 'Balanced', eco: 'Eco' };
+  let ecoMode = localStorage.getItem('aerolink-eco') === '1';
+
+  function paintEco() {
+    ecoBtn.classList.toggle('active', ecoMode);
+    ecoBtn.setAttribute('aria-pressed', String(ecoMode));
+  }
+  paintEco();
+
+  ecoBtn.addEventListener('click', () => {
+    ecoMode = !ecoMode;
+    localStorage.setItem('aerolink-eco', ecoMode ? '1' : '0');
+    paintEco();
+    if (streaming) send({ type: 'screen-profile', mode: ecoMode ? 'eco' : 'auto' });
+  });
+
   function syncStream() {
     const want = visible && mode === 'screen' && !isHost && !document.hidden;
     if (want && !streaming) {
@@ -76,6 +97,7 @@ export function initRemote({ store, send, isHost }) {
       hint.textContent = 'Connecting to the Mac’s screen…';
       hint.style.display = 'grid';
       send({ type: 'screen-start' });
+      if (ecoMode) send({ type: 'screen-profile', mode: 'eco' });
     } else if (!want && streaming) {
       streaming = false;
       send({ type: 'screen-stop' });
@@ -86,6 +108,12 @@ export function initRemote({ store, send, isHost }) {
   function onFrame(msg) {
     if (!streaming || !msg.dataUrl) return;
     img.src = msg.dataUrl;
+    if (msg.seq) send({ type: 'screen-ack', seq: msg.seq });
+    if (msg.profile && PROFILE_NAMES[msg.profile]) {
+      qualityLabel.textContent = PROFILE_NAMES[msg.profile];
+      qualityLabel.hidden = false;
+      qualityLabel.dataset.profile = msg.profile;
+    }
     if (!img.classList.contains('live')) {
       img.classList.add('live');
       hint.style.display = 'none';

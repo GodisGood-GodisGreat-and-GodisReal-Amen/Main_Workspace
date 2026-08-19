@@ -12,9 +12,8 @@ const { createMacInput } = require('./mac-input');
 
 const APP_DIRS = ['/Applications', '/System/Applications', path.join(os.homedir(), 'Applications')];
 const APPS_CACHE_MS = 30000;
-const FRAME_INTERVAL_MS = 650;
-const FRAME_WIDTH = 1024;
-const JPEG_QUALITY = 55;
+// LAN default ("hd" rung); the hub lowers width/quality/cadence on slow links
+const DEFAULT_PROFILE = { name: 'hd', width: 1024, quality: 55, intervalMs: 650 };
 
 function createMacAdapter() {
   const macInput = createMacInput({
@@ -24,6 +23,8 @@ function createMacAdapter() {
   let appsCache = { at: 0, list: [] };
   let screenTimer = null;
   let capturing = false;
+  let onFrameCb = null;
+  let profile = { ...DEFAULT_PROFILE };
 
   async function listApps() {
     if (Date.now() - appsCache.at < APPS_CACHE_MS) return appsCache.list;
@@ -46,42 +47,54 @@ function createMacAdapter() {
     return list;
   }
 
+  const capture = async () => {
+    if (capturing) return; // never queue captures behind a slow one
+    capturing = true;
+    try {
+      const { size } = screen.getPrimaryDisplay();
+      const height = Math.round((profile.width / size.width) * size.height);
+      const sources = await desktopCapturer.getSources({
+        types: ['screen'],
+        thumbnailSize: { width: profile.width, height },
+      });
+      const source = sources[0];
+      if (source && !source.thumbnail.isEmpty()) {
+        const jpeg = source.thumbnail.toJPEG(profile.quality);
+        onFrameCb({
+          dataUrl: `data:image/jpeg;base64,${jpeg.toString('base64')}`,
+          w: size.width,
+          h: size.height,
+          ts: Date.now(),
+        });
+      }
+    } catch {
+      // missing Screen Recording permission — keep trying quietly; macOS
+      // shows its own prompt the first time and frames flow once granted
+    } finally {
+      capturing = false;
+    }
+  };
+
   function startScreen(onFrame) {
     if (screenTimer) return;
-    const capture = async () => {
-      if (capturing) return; // never queue captures behind a slow one
-      capturing = true;
-      try {
-        const { size } = screen.getPrimaryDisplay();
-        const height = Math.round((FRAME_WIDTH / size.width) * size.height);
-        const sources = await desktopCapturer.getSources({
-          types: ['screen'],
-          thumbnailSize: { width: FRAME_WIDTH, height },
-        });
-        const source = sources[0];
-        if (source && !source.thumbnail.isEmpty()) {
-          const jpeg = source.thumbnail.toJPEG(JPEG_QUALITY);
-          onFrame({
-            dataUrl: `data:image/jpeg;base64,${jpeg.toString('base64')}`,
-            w: size.width,
-            h: size.height,
-            ts: Date.now(),
-          });
-        }
-      } catch {
-        // missing Screen Recording permission — keep trying quietly; macOS
-        // shows its own prompt the first time and frames flow once granted
-      } finally {
-        capturing = false;
-      }
-    };
+    onFrameCb = onFrame;
     capture();
-    screenTimer = setInterval(capture, FRAME_INTERVAL_MS);
+    screenTimer = setInterval(capture, profile.intervalMs);
   }
 
   function stopScreen() {
     clearInterval(screenTimer);
     screenTimer = null;
+  }
+
+  // The hub picks the rung from measured deliveries (or a pinned eco mode):
+  // smaller thumbnails, stronger JPEG, slower cadence on struggling links.
+  function setScreenProfile(next) {
+    profile = { ...profile, ...next };
+    if (screenTimer) {
+      clearInterval(screenTimer);
+      screenTimer = setInterval(capture, profile.intervalMs);
+    }
   }
 
   return {
@@ -92,6 +105,7 @@ function createMacAdapter() {
     listApps,
     startScreen,
     stopScreen,
+    setScreenProfile,
     getStorageDir: () => path.join(os.homedir(), 'Downloads', 'AeroLink'),
   };
 }

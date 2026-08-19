@@ -31,7 +31,21 @@ const MSG = {
   SCREEN_START: 'screen-start',
   SCREEN_STOP: 'screen-stop',
   SCREEN_FRAME: 'screen-frame',
+  // low-bandwidth streaming: the client acks each frame so the hub can pace
+  // deliveries to the link, and may pin the eco profile explicitly
+  SCREEN_ACK: 'screen-ack',
+  SCREEN_PROFILE: 'screen-profile',
 };
+
+// Capture profiles for the live screen, slowest link first. The hub walks
+// this ladder from measured frame-delivery times; `intervalMs` doubles as the
+// delivery-time budget a link must hold to stay on that rung.
+const SCREEN_PROFILES = {
+  eco: { width: 560, quality: 32, intervalMs: 1400 },
+  balanced: { width: 800, quality: 45, intervalMs: 900 },
+  hd: { width: 1024, quality: 55, intervalMs: 650 },
+};
+const PROFILE_LADDER = ['eco', 'balanced', 'hd'];
 
 const ROLES = { HOST: 'mac-host', PHONE: 'phone-client' };
 
@@ -41,4 +55,4 @@ const INPUT_KINDS = ['move', 'click', 'click-at', 'scroll', 'text', 'key', 'medi
 
 const CLOSE_BAD_TOKEN = 4001;
 
-module.exports = { MSG, ROLES, INPUT_KINDS, CLOSE_BAD_TOKEN };
+module.exports = { MSG, ROLES, INPUT_KINDS, CLOSE_BAD_TOKEN, SCREEN_PROFILES, PROFILE_LADDER };

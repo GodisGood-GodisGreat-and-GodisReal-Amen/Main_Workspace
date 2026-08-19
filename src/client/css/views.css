@@ -221,11 +221,40 @@
   color: rgba(234, 246, 255, 0.92);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
-.screen-tip {
+.screen-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
   margin: 10px 2px 14px;
-  text-align: center;
+}
+.screen-tip {
+  flex: 1;
+  min-width: 180px;
+  margin: 0;
+  text-align: left;
   font: 400 12.5px/1.5 var(--font-ui);
   color: var(--aero-ink-soft);
+}
+.stream-quality {
+  font: 700 11px/1 var(--font-ui);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--aero-ink-soft);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--aero-line);
+  border-radius: var(--radius-pill);
+  padding: 5px 10px;
+}
+#eco-toggle {
+  min-height: 34px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+#eco-toggle.active {
+  background: var(--grad-green-btn);
+  border-color: rgba(77, 154, 46, 0.5);
+  color: #2c5e12;
 }
 .tap-ripple {
   position: absolute;

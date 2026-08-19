@@ -9,7 +9,7 @@ const DEMO_APPS = [
 
 // A gentle Frutiger-flavored test card, streamed as an SVG data URL so the
 // full-screen mode can be exercised without a Mac (dev server, e2e tests).
-function demoFrame(n) {
+function demoFrame(n, profileName) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="600">
   <defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0" stop-color="#bfe6ff"/><stop offset=".6" stop-color="#eaf6ff"/><stop offset="1" stop-color="#d8f3c8"/>
@@ -19,6 +19,7 @@ function demoFrame(n) {
   <circle cx="${760 - (n * 29) % 640}" cy="${420 - (n * 17) % 300}" r="28" fill="#fff" opacity=".45"/>
   <text x="480" y="284" text-anchor="middle" font-family="sans-serif" font-size="40" fill="#1266a8">Demo screen (stub adapter)</text>
   <text x="480" y="336" text-anchor="middle" font-family="sans-serif" font-size="26" fill="#476982">frame ${n} — the real Mac app streams the actual display here</text>
+  <text x="480" y="380" text-anchor="middle" font-family="sans-serif" font-size="22" fill="#476982">capture profile: ${profileName}</text>
 </svg>`;
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
 }
@@ -29,6 +30,15 @@ function createStubAdapter(options = {}) {
   let clipboardText = '';
   let screenTimer = null;
   let frameNo = 0;
+  let onFrameCb = null;
+  let profile = { name: 'hd', intervalMs: options.frameIntervalMs || 800 };
+
+  function startTimer() {
+    const tick = () => onFrameCb({ dataUrl: demoFrame(frameNo++, profile.name), w: 960, h: 600, ts: Date.now() });
+    tick();
+    screenTimer = setInterval(tick, options.frameIntervalMs || profile.intervalMs);
+  }
+
   return {
     platform: options.platform || process.platform,
     getClipboard: () => clipboardText,
@@ -40,13 +50,21 @@ function createStubAdapter(options = {}) {
     listApps: async () => DEMO_APPS,
     startScreen(onFrame) {
       if (screenTimer) return;
-      const tick = () => onFrame({ dataUrl: demoFrame(frameNo++), w: 960, h: 600, ts: Date.now() });
-      tick();
-      screenTimer = setInterval(tick, options.frameIntervalMs || 800);
+      onFrameCb = onFrame;
+      startTimer();
     },
     stopScreen() {
       clearInterval(screenTimer);
       screenTimer = null;
+    },
+    // mirrors mac-adapter: the hub walks the profile ladder from measured
+    // delivery times; the stub re-times its ticks and stamps the frame text
+    setScreenProfile(next) {
+      profile = { ...profile, ...next };
+      if (screenTimer) {
+        clearInterval(screenTimer);
+        startTimer();
+      }
     },
     getStorageDir: () =>
       options.storageDir || path.join(process.cwd(), 'received-files'),

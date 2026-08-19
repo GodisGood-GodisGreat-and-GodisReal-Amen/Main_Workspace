@@ -70,6 +70,14 @@ A few things worth knowing:
   box and paste manually, then Send. **USB pairing avoids this** (it runs over
   `localhost`, which gets the full clipboard API). Mac → phone auto-sync always
   works either way.
+- **Slow connections:** the live screen adapts by itself. Each frame is
+  acknowledged by the phone, so the Mac only sends the next one once the last
+  arrived — stale frames are dropped, never queued — and the capture steps
+  through three profiles (**HD → Balanced → Eco**: smaller, lighter, less
+  frequent frames) based on how fast frames actually reach you. Frames where
+  nothing changed on screen aren't sent at all. The **Eco** button under the
+  live view pins the lightest profile if you want to spare data; the little
+  badge next to it shows the profile currently streaming.
 
 ## Running it
 

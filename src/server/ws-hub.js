@@ -2,7 +2,7 @@
 
 const { WebSocketServer } = require('ws');
 const crypto = require('crypto');
-const { MSG, ROLES, INPUT_KINDS, CLOSE_BAD_TOKEN } = require('./protocol');
+const { MSG, ROLES, INPUT_KINDS, CLOSE_BAD_TOKEN, SCREEN_PROFILES, PROFILE_LADDER } = require('./protocol');
 const { tokensEqual } = require('./token');
 
 const HELLO_TIMEOUT_MS = 5000;
@@ -81,21 +81,101 @@ function createHub({ httpServer, adapter, pairingToken, hostToken, log = () => {
   }, CLIPBOARD_POLL_MS);
 
   // ---- screen streaming: start the adapter capture while anyone watches ----
+  // Frames are paced per client for low-bandwidth links: a client that speaks
+  // the ack protocol gets the next frame only once the previous one arrived
+  // (latest frame wins — stale ones are dropped, never queued), and measured
+  // delivery times walk the capture profile ladder up or down. Legacy clients
+  // that never ack keep the old firehose, bounded by the socket buffer guard.
   let screenRunning = false;
+  let frameSeq = 0;
+  let lastFrameHash = null;
+  let currentProfile = 'hd';
+
+  const ACK_STALL_MS = 8000; // a lost ack must not freeze the stream forever
+  const MAX_BUFFERED_BYTES = 256 * 1024;
+  const PROFILE_SAMPLES = 3;
 
   function screenWatchers() {
     return [...clients.values()].filter((m) => m.wantsScreen).length;
+  }
+
+  function sendFrame(ws, meta, frame) {
+    meta.screen.inFlight = { seq: frame.seq, sentAt: Date.now() };
+    if (ws.readyState === ws.OPEN) ws.send(frame.raw);
+  }
+
+  function deliverFrame(frame) {
+    const hash = crypto.createHash('md5').update(frame.dataUrl).digest('hex');
+    if (hash === lastFrameHash) return; // static screen -> no bytes at all
+    lastFrameHash = hash;
+    const seq = ++frameSeq;
+    const raw = JSON.stringify({ type: MSG.SCREEN_FRAME, ...frame, seq, profile: currentProfile });
+    for (const [ws, meta] of clients) {
+      if (!meta.wantsScreen) continue;
+      const s = meta.screen;
+      if (s.inFlight && Date.now() - s.inFlight.sentAt > ACK_STALL_MS) s.inFlight = null;
+      if ((s.paced && s.inFlight) || ws.bufferedAmount > MAX_BUFFERED_BYTES) {
+        s.pending = { seq, raw }; // latest frame wins; the older pending is dropped
+        continue;
+      }
+      sendFrame(ws, meta, { seq, raw });
+    }
+  }
+
+  // Desired ladder rung for one watcher, from its recent delivery times: step
+  // down when frames take longer than the current rung's budget, step up when
+  // there is comfortable headroom for the faster rung.
+  function desiredFor(meta) {
+    const s = meta.screen;
+    if (s.mode === 'eco') return 'eco';
+    if (s.samples.length < PROFILE_SAMPLES) return currentProfile;
+    const avg = s.samples.reduce((a, b) => a + b, 0) / s.samples.length;
+    const idx = PROFILE_LADDER.indexOf(currentProfile);
+    if (avg > SCREEN_PROFILES[currentProfile].intervalMs * 1.25 && idx > 0) {
+      return PROFILE_LADDER[idx - 1];
+    }
+    const faster = PROFILE_LADDER[Math.min(idx + 1, PROFILE_LADDER.length - 1)];
+    if (avg < SCREEN_PROFILES[faster].intervalMs * 0.35) return faster;
+    return currentProfile;
+  }
+
+  function applyProfile() {
+    // the capture is shared by all watchers: follow the slowest one
+    let want = null;
+    for (const meta of clients.values()) {
+      if (!meta.wantsScreen) continue;
+      const d = desiredFor(meta);
+      if (want === null || PROFILE_LADDER.indexOf(d) < PROFILE_LADDER.indexOf(want)) want = d;
+    }
+    if (!want || want === currentProfile) return;
+    setProfile(want);
+  }
+
+  function setProfile(name) {
+    currentProfile = name;
+    for (const meta of clients.values()) if (meta.screen) meta.screen.samples = [];
+    if (adapter.setScreenProfile) {
+      try {
+        adapter.setScreenProfile({ name, ...SCREEN_PROFILES[name] });
+      } catch (err) {
+        log('profile switch failed:', err.message);
+      }
+    }
+  }
+
+  function recordDelivery(meta, ms) {
+    const s = meta.screen;
+    s.samples.push(ms);
+    if (s.samples.length > PROFILE_SAMPLES) s.samples.shift();
+    applyProfile();
   }
 
   function syncScreenCapture() {
     const wanted = screenWatchers() > 0;
     if (wanted && !screenRunning) {
       screenRunning = true;
-      Promise.resolve(
-        adapter.startScreen((frame) =>
-          broadcast({ type: MSG.SCREEN_FRAME, ...frame }, (m) => m.wantsScreen)
-        )
-      ).catch((err) => {
+      lastFrameHash = null; // the first frame of a session must never dedup away
+      Promise.resolve(adapter.startScreen(deliverFrame)).catch((err) => {
         screenRunning = false;
         log('screen capture failed:', err.message);
         broadcast(
@@ -110,6 +190,7 @@ function createHub({ httpServer, adapter, pairingToken, hostToken, log = () => {
       } catch (err) {
         log('screen stop failed:', err.message);
       }
+      setProfile('hd'); // next viewing session starts from the LAN default
     }
   }
 
@@ -178,11 +259,33 @@ function createHub({ httpServer, adapter, pairingToken, hostToken, log = () => {
           return;
         }
         meta.wantsScreen = true;
+        meta.screen.samples = [];
         syncScreenCapture();
         break;
       case MSG.SCREEN_STOP:
         meta.wantsScreen = false;
+        meta.screen.inFlight = null;
+        meta.screen.pending = null;
         syncScreenCapture();
+        break;
+      case MSG.SCREEN_ACK: {
+        const s = meta.screen;
+        s.paced = true; // this client speaks the paced protocol
+        if (s.inFlight && msg.seq === s.inFlight.seq) {
+          recordDelivery(meta, Date.now() - s.inFlight.sentAt);
+          s.inFlight = null;
+        }
+        if (s.pending && !s.inFlight && meta.wantsScreen) {
+          const next = s.pending;
+          s.pending = null;
+          sendFrame(ws, meta, next);
+        }
+        break;
+      }
+      case MSG.SCREEN_PROFILE:
+        meta.screen.mode = msg.mode === 'eco' ? 'eco' : 'auto';
+        meta.screen.samples = [];
+        applyProfile();
         break;
       default:
         send(ws, { type: MSG.ERROR, code: 'bad-message', message: `unknown message type: ${msg.type}` });
@@ -231,6 +334,7 @@ function createHub({ httpServer, adapter, pairingToken, hostToken, log = () => {
           connectedAt: Date.now(),
           info: null,
           wantsScreen: false,
+          screen: { paced: false, inFlight: null, pending: null, samples: [], mode: 'auto' },
         };
         clients.set(ws, newMeta);
         if (role === ROLES.PHONE && lastClip === null) {

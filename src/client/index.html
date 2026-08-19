@@ -132,7 +132,11 @@
                 <img id="screen-img" alt="Live view of the Mac screen" draggable="false">
                 <div class="screen-hint" id="screen-hint">Connecting to the Mac&rsquo;s screen&hellip;</div>
               </div>
-              <p class="screen-tip">Tap the picture to click there &bull; hold for a right-click</p>
+              <div class="screen-tools">
+                <p class="screen-tip">Tap the picture to click there &bull; hold for a right-click</p>
+                <span class="stream-quality" id="stream-quality" hidden></span>
+                <button class="aero-btn ghost" id="eco-toggle" type="button" aria-pressed="false" title="Fewer, lighter frames — easier on slow connections"><span data-glyph="leaf" data-glyph-size="15"></span> Eco</button>
+              </div>
               <div class="trackpad" id="trackpad">Glide a finger to move the Mac&rsquo;s pointer<br>&bull; tap to click &bull; two fingers to scroll</div>
               <div class="send-text-row">
                 <input class="aero-input" id="remote-text" placeholder="Type on your Mac&hellip;">
